@@ -117,7 +117,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       </div>
     </section>
     <section id="v-cal" aria-label="Календар" hidden><p class="note" id="msg-cal" hidden></p><div style="display:flex;flex-direction:column;gap:14px"><button class="btn pri addbtn" id="add-ev" data-add="event" hidden>＋ Нова подія</button><div class="chips" id="cproj"></div><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div></div></section>
-    <section id="v-team" aria-label="Команда" hidden><p class="note" id="msg-team" hidden></p><div id="team" style="display:flex;flex-direction:column;gap:10px"></div></section>
+    <section id="v-team" aria-label="Команда" hidden><p class="note" id="msg-team" hidden></p><p class="hint" style="margin:0 2px 10px">з — відкриті задачі, п — найближчі події, де людина зайнята</p><div id="team" style="display:flex;flex-direction:column;gap:10px"></div></section>
     <section id="v-tasks" aria-label="Задачі" hidden><p class="note" id="msg-tasks" hidden></p>
       <div style="display:flex;flex-direction:column;gap:14px">
         <button class="btn pri addbtn" id="add-tk" data-add="task" hidden>＋ Нова задача</button>
@@ -185,8 +185,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       {id:'d5',title:'Запросити спікерів на захід',assignee:'Анастасія Авдєєнко',deadline:iso(6),status:'new',project:'Заходи'}
     ];
     D.team=[
-      {id:1,name:'Богдан Макаренко',position:'Режисер монтажу',tasks:[{title:'Підготувати сцену й світло',project:'Заходи',deadline:iso(12),status:'new'},{title:'Монтаж випуску з Валентиною',project:'Подкаст',deadline:iso(7),status:'work'}]},
-      {id:2,name:'Марія Карпенко',position:'Журналістка',tasks:[{title:'Стаття про школу №4',project:'Стаття',deadline:iso(21),status:'work'}]},
+      {id:1,name:'Богдан Макаренко',position:'Режисер монтажу',events:[{title:'Запис подкасту',project:'Подкаст',date:iso(3),time:'15:00',place:'Студія'},{title:'Фестиваль міста',project:'Заходи',date:iso(12),time:'11:00',place:''}],tasks:[{title:'Підготувати сцену й світло',project:'Заходи',deadline:iso(12),status:'new'},{title:'Монтаж випуску з Валентиною',project:'Подкаст',deadline:iso(7),status:'work'}]},
+      {id:2,name:'Марія Карпенко',position:'Журналістка',events:[{title:'Запис подкасту',project:'Подкаст',date:iso(3),time:'15:00',place:'Студія'}],tasks:[{title:'Стаття про школу №4',project:'Стаття',deadline:iso(21),status:'work'}]},
       {id:3,name:'Ольга Присяжна',position:'Репортерка',tasks:[]},
       {id:4,name:'Анастасія Авдєєнко',position:'Комʼюніті менеджерка',tasks:[{title:'Запросити спікерів на захід',project:'Заходи',deadline:iso(6),status:'new'}]}
     ];
@@ -390,9 +390,10 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     if(!D.team.length){$('#team').innerHTML='';say('team','Список команди порожній.');return}
     say('team','');
     $('#team').innerHTML=D.team.map(function(m){
-      var open=st.open===String(m.id), n=m.tasks.length;
-      var body=open?'<div class="pbody">'+(n?m.tasks.map(function(t){return '<div class="pt"><div><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>до '+fmtShort(t.deadline)+'</p></div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join(''):'<p class="hint" style="padding-top:10px">Відкритих задач немає.</p>')+'</div>':'';
-      return '<div class="pcard"><button class="phead" data-tm="'+m.id+'" aria-expanded="'+open+'"><span class="av" data-av="'+m.id+'" data-nm="'+esc(m.name)+'">'+esc(initials(m.name))+'</span><span class="pinfo"><b>'+esc(m.name)+'</b><span>'+esc(m.position||'')+'</span></span><span class="cnt'+(n?' has':'')+'">'+n+'</span></button>'+body+'</div>';
+      var open=st.open===String(m.id), ev=m.events||[], n=m.tasks.length, ne=ev.length;
+      var evh=ne?'<p class="hint" style="padding-top:12px"><b>Зайнятий(а) на подіях</b></p>'+ev.map(function(e){return '<div class="pt"><div><b>'+esc(e.title)+'</b><span class="tag">'+esc(e.project)+'</span><p>'+fmtShort(e.date)+', '+esc(e.time)+(e.place?' · '+esc(e.place):'')+'</p></div></div>'}).join(''):'';
+      var body=open?'<div class="pbody">'+(n?m.tasks.map(function(t){return '<div class="pt"><div><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>до '+fmtShort(t.deadline)+'</p></div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join(''):'<p class="hint" style="padding-top:10px">Відкритих задач немає.</p>')+evh+'</div>':'';
+      return '<div class="pcard"><button class="phead" data-tm="'+m.id+'" aria-expanded="'+open+'"><span class="av" data-av="'+m.id+'" data-nm="'+esc(m.name)+'">'+esc(initials(m.name))+'</span><span class="pinfo"><b>'+esc(m.name)+'</b><span>'+esc(m.position||'')+'</span></span><span class="cnt'+(n?' has':'')+'" title="Задачі">'+n+' з</span><span class="cnt'+(ne?' has':'')+'" title="Події">'+ne+' п</span></button>'+body+'</div>';
     }).join('');
     $$('#team .av').forEach(function(el){loadPhoto(el.dataset.av,el,el.dataset.nm)});
   }
