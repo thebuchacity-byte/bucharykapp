@@ -369,12 +369,22 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   }
   var PH={};
   function initials(n){var w=n.replace(/[()]/g,' ').split(/\s+/).filter(Boolean);return ((w[0]||'?')[0]+(w[1]?w[1][0]:'')).toUpperCase()}
-  function loadPhoto(id,el){
+  var SITE={'остап':'ostapa','карпенк':'karpenko','шатил':'shatylo','тарадайн':'taradainyk','авдєєн':'avdieienko','авдеєн':'avdieienko','макаренк':'makarenko','кондрат':'kondratiuk','шерстюк':'sherstiuk','приступ':'prystupa','присяжн':'prysiazhna'};
+  function sitePhoto(name){var n=(name||'').toLowerCase();for(var k in SITE){if(n.indexOf(k)>-1) return 'photos/'+SITE[k]+'.jpg'}return null}
+  function fromApi(id,el){
     if(!LIVE||PH[id]===null) return;
     if(PH[id]){el.innerHTML='<img alt="" src="'+PH[id]+'">';return}
     fetch(API_BASE+'/api/photo/'+id,{headers:{'X-Init-Data':INIT}}).then(function(r){if(!r.ok) throw 0;return r.blob()})
       .then(function(b){PH[id]=URL.createObjectURL(b);el.innerHTML='<img alt="" src="'+PH[id]+'">'})
       .catch(function(){PH[id]=null});
+  }
+  function loadPhoto(id,el,name){
+    var u=sitePhoto(name);
+    if(!u){fromApi(id,el);return}
+    var im=new Image();im.alt='';
+    im.onload=function(){el.innerHTML='';el.appendChild(im)};
+    im.onerror=function(){fromApi(id,el)};
+    im.src=u;
   }
   function team(){
     if(!D.team.length){$('#team').innerHTML='';say('team','Список команди порожній.');return}
@@ -382,9 +392,9 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     $('#team').innerHTML=D.team.map(function(m){
       var open=st.open===String(m.id), n=m.tasks.length;
       var body=open?'<div class="pbody">'+(n?m.tasks.map(function(t){return '<div class="pt"><div><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>до '+fmtShort(t.deadline)+'</p></div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join(''):'<p class="hint" style="padding-top:10px">Відкритих задач немає.</p>')+'</div>':'';
-      return '<div class="pcard"><button class="phead" data-tm="'+m.id+'" aria-expanded="'+open+'"><span class="av" data-av="'+m.id+'">'+esc(initials(m.name))+'</span><span class="pinfo"><b>'+esc(m.name)+'</b><span>'+esc(m.position||'')+'</span></span><span class="cnt'+(n?' has':'')+'">'+n+'</span></button>'+body+'</div>';
+      return '<div class="pcard"><button class="phead" data-tm="'+m.id+'" aria-expanded="'+open+'"><span class="av" data-av="'+m.id+'" data-nm="'+esc(m.name)+'">'+esc(initials(m.name))+'</span><span class="pinfo"><b>'+esc(m.name)+'</b><span>'+esc(m.position||'')+'</span></span><span class="cnt'+(n?' has':'')+'">'+n+'</span></button>'+body+'</div>';
     }).join('');
-    $$('#team .av').forEach(function(el){loadPhoto(el.dataset.av,el)});
+    $$('#team .av').forEach(function(el){loadPhoto(el.dataset.av,el,el.dataset.nm)});
   }
   function show(v){
     st.view=v;
