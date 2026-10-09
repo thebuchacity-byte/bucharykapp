@@ -5,15 +5,15 @@
 /* Layout: мобільний застосунок на всю висоту; зверху назва, посередині вміст вкладки, знизу панель вкладок як у Telegram */
 :root{
   --bg:#F5F3EF; --surface:#FFFFFF; --fg:#17202B; --muted:#5E6B79; --line:#E3DFD7;
-  --accent:#D9481F; --accent-soft:#FBE3DA; --good:#2E7D4F; --warn:#B7791F; --bad:#B3392B;
+  --accent:#D9481F; --on-accent:#FFFFFF; --accent-soft:#FBE3DA; --good:#2E7D4F; --warn:#B7791F; --bad:#B3392B;
   --font:'Rubik',system-ui,-apple-system,'Segoe UI',Arial,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#10161D; --surface:#1A232D; --fg:#EEF1F4; --muted:#93A0AE; --line:#2A3541;
-  --accent:#F2764A; --accent-soft:#3A2219; --good:#5CBF86; --warn:#E3B04B; --bad:#EE7B6C; color-scheme:dark}}
+  --accent:#F2764A; --on-accent:#10161D; --accent-soft:#3A2219; --good:#5CBF86; --warn:#E3B04B; --bad:#EE7B6C; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#10161D; --surface:#1A232D; --fg:#EEF1F4; --muted:#93A0AE; --line:#2A3541;
-  --accent:#F2764A; --accent-soft:#3A2219; --good:#5CBF86; --warn:#E3B04B; --bad:#EE7B6C; color-scheme:dark}
+  --accent:#F2764A; --on-accent:#10161D; --accent-soft:#3A2219; --good:#5CBF86; --warn:#E3B04B; --bad:#EE7B6C; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.4}
@@ -58,6 +58,37 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
 .tk p{margin:2px 0 0;color:var(--muted);font-size:13px}
 .st{flex:none;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid currentColor}
 .st.new{color:var(--muted)} .st.work{color:var(--warn)} .st.done{color:var(--good)}
+.acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.acts span{font-size:13px;color:var(--muted)}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);font:500 13px var(--font);padding:8px 14px;border-radius:8px;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn:disabled{opacity:.5;cursor:default}
+.addbtn{width:100%}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.phead{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;color:inherit;font:inherit;text-align:left;padding:12px;cursor:pointer}
+.av{width:44px;height:44px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:600;flex:none;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.pinfo{flex:1;min-width:0}
+.pinfo b{display:block;font-weight:600}
+.pinfo span{display:block;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cnt{flex:none;font-family:var(--mono);font-size:13px;min-width:28px;text-align:center;padding:3px 8px;border-radius:999px;background:var(--line);color:var(--fg)}
+.cnt.has{background:var(--accent-soft);color:var(--accent)}
+.pbody{border-top:1px solid var(--line);padding:4px 12px 12px;display:flex;flex-direction:column}
+.pt{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.pt:first-child{border-top:0}
+.pt p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.pt div{min-width:0}
+.sheet{position:fixed;inset:0;background:rgba(10,14,20,.5);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet .box{width:100%;max-width:560px;max-height:92%;overflow:auto;background:var(--surface);border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+.sheet h3{margin:0;font-size:18px}
+.fld{display:flex;flex-direction:column;gap:5px;min-width:0}
+.fld label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+.fld input,.fld select{width:100%;min-width:0;font:400 16px var(--font);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.fld input:focus-visible,.fld select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.err{font-size:14px;color:var(--bad);margin:0}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));max-width:528px;margin:0 auto;background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:14px;text-align:center}
 .note{color:var(--muted);text-align:center;padding:24px 8px;margin:0}
 .st.reported{color:var(--accent)}
 [hidden]{display:none!important}
@@ -85,18 +116,23 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         <div class="panel"><h2 style="margin-bottom:4px">Усі мережі, останній місяць</h2><div class="rows" id="all"></div></div>
       </div>
     </section>
-    <section id="v-cal" aria-label="Календар" hidden><p class="note" id="msg-cal" hidden></p><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div></section>
+    <section id="v-cal" aria-label="Календар" hidden><p class="note" id="msg-cal" hidden></p><div style="display:flex;flex-direction:column;gap:14px"><button class="btn pri addbtn" id="add-ev" data-add="event" hidden>＋ Нова подія</button><div class="chips" id="cproj"></div><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div></div></section>
+    <section id="v-team" aria-label="Команда" hidden><p class="note" id="msg-team" hidden></p><div id="team" style="display:flex;flex-direction:column;gap:10px"></div></section>
     <section id="v-tasks" aria-label="Задачі" hidden><p class="note" id="msg-tasks" hidden></p>
       <div style="display:flex;flex-direction:column;gap:14px">
+        <button class="btn pri addbtn" id="add-tk" data-add="task" hidden>＋ Нова задача</button>
         <div class="chips" id="proj"></div>
         <div id="tasks" style="display:flex;flex-direction:column;gap:10px"></div>
       </div>
     </section>
   </main>
+  <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true"><div class="box" id="box"></div></div>
+  <div class="toast" id="toast" hidden role="status"></div>
   <nav><div class="in" role="tablist">
     <button role="tab" id="tab-stats" data-v="stats" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Статистика</button>
     <button role="tab" data-v="cal" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Календар</button>
     <button role="tab" data-v="tasks" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12M3 6l1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>Задачі</button>
+    <button role="tab" data-v="team" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3.2 3.2 0 0 1 0 5.6M18 14.3c1.8.8 3 2.6 3 4.7"/></svg>Команда</button>
   </div></nav>
 </div>
 <script>
@@ -115,8 +151,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   var dec=function(x){return x.toFixed(1).replace('.',',').replace(',0','')};
   var big=function(v){var a=Math.abs(v);return a>=1e6?dec(v/1e6)+' млн':a>=1e4?Math.round(v/1e3)+' тис.':a>=1e3?dec(v/1e3)+' тис.':fmt(v)};
   var axis=function(v){var a=Math.abs(v);return a>=1e6?dec(v/1e6)+'M':a>=1e4?Math.round(v/1e3)+'k':a>=1e3?dec(v/1e3)+'k':Math.round(v)};
-  var st={m:'followers',net:0,view:'stats',proj:'Усі'};
-  var D={labels:[],nets:[],events:[],tasks:[],me:{stats:true,tasks:true}};
+  var st={open:'',m:'followers',net:0,view:'stats',proj:'Усі',cproj:'Усі',confirm:'',busy:''};
+  var D={labels:[],nets:[],events:[],tasks:[],team:[],me:{stats:true,tasks:true}};
 
   function demo(){
     var L=[],now=new Date();
@@ -142,11 +178,17 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       {date:iso(13),time:'10:00',title:'Круглий стіл: дезінформація',place:'Київ',project:'Дезінфо'}
     ];
     D.tasks=[
-      {title:'Стаття про школу №4',assignee:'Марія Карпенко',deadline:iso(21),status:'work',project:'Стаття'},
-      {title:'Підготувати сцену й світло',assignee:'Богдан Макаренко',deadline:iso(12),status:'new',project:'Заходи'},
-      {title:'Монтаж випуску з Валентиною',assignee:'Богдан Макаренко',deadline:iso(7),status:'work',project:'Подкаст'},
-      {title:'Огляд наративів тижня',assignee:'Мар’яна Шерстюк',deadline:iso(4),status:'reported',project:'Дезінфо'},
-      {title:'Запросити спікерів на захід',assignee:'Анастасія Авдєєнко',deadline:iso(6),status:'new',project:'Заходи'}
+      {id:'d1',mine:true,title:'Стаття про школу №4',assignee:'Марія Карпенко',deadline:iso(21),status:'work',project:'Стаття'},
+      {id:'d2',mine:true,title:'Підготувати сцену й світло',assignee:'Богдан Макаренко',deadline:iso(12),status:'new',project:'Заходи'},
+      {id:'d3',title:'Монтаж випуску з Валентиною',assignee:'Богдан Макаренко',deadline:iso(7),status:'work',project:'Подкаст'},
+      {id:'d4',title:'Огляд наративів тижня',assignee:'Мар’яна Шерстюк',deadline:iso(4),status:'reported',project:'Дезінфо'},
+      {id:'d5',title:'Запросити спікерів на захід',assignee:'Анастасія Авдєєнко',deadline:iso(6),status:'new',project:'Заходи'}
+    ];
+    D.team=[
+      {id:1,name:'Богдан Макаренко',position:'Режисер монтажу',tasks:[{title:'Підготувати сцену й світло',project:'Заходи',deadline:iso(12),status:'new'},{title:'Монтаж випуску з Валентиною',project:'Подкаст',deadline:iso(7),status:'work'}]},
+      {id:2,name:'Марія Карпенко',position:'Журналістка',tasks:[{title:'Стаття про школу №4',project:'Стаття',deadline:iso(21),status:'work'}]},
+      {id:3,name:'Ольга Присяжна',position:'Репортерка',tasks:[]},
+      {id:4,name:'Анастасія Авдєєнко',position:'Комʼюніті менеджерка',tasks:[{title:'Запросити спікерів на захід',project:'Заходи',deadline:iso(6),status:'new'}]}
     ];
     $('#demo').hidden=false;
   }
@@ -207,10 +249,13 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function fmtDay(iso){var p=iso.split('-'),d=new Date(+p[0],+p[1]-1,+p[2]);return WD[d.getDay()]+', '+d.getDate()+' '+MG[d.getMonth()]}
   function fmtShort(iso){var p=iso.split('-');return +p[2]+' '+MON[+p[1]-1]+'.'}
   function cal(){
-    if(!D.events.length){$('#cal').innerHTML='';say('cal','Подій на найближчі три місяці немає.');return}
+    if(!D.events.length){$('#cal').innerHTML='';$('#cproj').innerHTML='';say('cal','Подій на найближчі три місяці немає.');return}
     say('cal','');
+    var PR=['Усі'];D.events.forEach(function(e){if(e.project&&PR.indexOf(e.project)<0)PR.push(e.project)});
+    if(PR.indexOf(st.cproj)<0) st.cproj='Усі';
+    $('#cproj').innerHTML=PR.length>2?PR.map(function(p){return '<button class="chip" data-cp="'+esc(p)+'" aria-pressed="'+(p===st.cproj)+'">'+esc(p)+'</button>'}).join(''):'';
     var days=[],map={};
-    D.events.forEach(function(e){if(!map[e.date]){map[e.date]={d:e.date,e:[]};days.push(map[e.date])}map[e.date].e.push(e)});
+    D.events.filter(function(e){return st.cproj==='Усі'||e.project===st.cproj}).forEach(function(e){if(!map[e.date]){map[e.date]={d:e.date,e:[]};days.push(map[e.date])}map[e.date].e.push(e)});
     $('#cal').innerHTML=days.map(function(day){return '<div class="day"><h2>'+fmtDay(day.d)+'</h2>'+day.e.map(function(e){return '<div class="ev"><time>'+esc(e.time)+'</time><div><b>'+esc(e.title)+'</b><span class="tag">'+esc(e.project)+'</span>'+(e.place?'<p>'+esc(e.place)+'</p>':'')+'</div></div>'}).join('')+'</div>'}).join('');
   }
   var SN={new:'Нова',work:'В роботі',reported:'Здана',done:'Готово'};
@@ -221,12 +266,130 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     say('tasks','');
     $('#proj').innerHTML=PR.length>2?PR.map(function(p){return '<button class="chip" data-p="'+esc(p)+'" aria-pressed="'+(p===st.proj)+'">'+esc(p)+'</button>'}).join(''):'';
     $('#tasks').innerHTML=D.tasks.filter(function(t){return st.proj==='Усі'||t.project===st.proj}).map(function(t){
-      return '<div class="tk"><div style="min-width:0"><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>'+esc(t.assignee)+' · до '+fmtShort(t.deadline)+'</p></div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join('');
+      var acts='',dis=st.busy===t.id?' disabled':'';
+      if(t.mine&&t.status==='new') acts='<div class="acts"><button class="btn pri" data-act="take" data-id="'+esc(t.id)+'"'+dis+'>Беру в роботу</button><button class="btn" data-act="decline" data-id="'+esc(t.id)+'"'+dis+'>Не можу</button></div>';
+      else if(t.mine&&t.status==='work'&&!t.event){
+        acts=st.confirm===t.id?'<div class="acts"><span>Редактор отримає сповіщення.</span><button class="btn pri" data-act="done" data-id="'+esc(t.id)+'"'+dis+'>Так, виконано</button><button class="btn" data-act="no" data-id="'+esc(t.id)+'">Ні</button></div>'
+          :'<div class="acts"><button class="btn" data-act="ask" data-id="'+esc(t.id)+'">Виконано</button></div>';}
+      return '<div class="tk"><div style="min-width:0"><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>'+esc(t.assignee)+' · до '+fmtShort(t.deadline)+'</p>'+acts+'</div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join('');
+  }
+  var toastT;
+  function toast(t){var n=$('#toast');n.textContent=t;n.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){n.hidden=true},3500)}
+  function setStatus(id,status){
+    D.tasks=D.tasks.filter(function(t){return t.id!==id||status!=='gone'});
+    if(status!=='gone') D.tasks.forEach(function(t){if(t.id===id)t.status=status});
+  }
+  function act(a,id){
+    if(a==='ask'){st.confirm=id;tasks();return}
+    if(a==='no'){st.confirm='';tasks();return}
+    st.confirm='';st.busy=id;tasks();
+    if(!LIVE){setTimeout(function(){st.busy='';setStatus(id,a==='take'?'work':'gone');tasks();toast('Тестові дані: нічого не надіслано.')},300);return}
+    fetch(API_BASE+'/api/task/status',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify({id:id,action:a})})
+      .then(function(r){return r.json()}).then(function(r){
+        st.busy='';
+        if(r.status) setStatus(id,r.status);
+        tasks();toast(r.note||'Готово');
+      }).catch(function(){st.busy='';tasks();toast('Не вдалося зберегти. Спробуйте ще раз.')});
+  }
+  var FORM=null;
+  function demoForm(){return {event_projects:['Заходи','Стаття'],task_projects:[
+    {name:'Заходи',is_event:true,members:[{id:1,name:'Богдан Макаренко'},{id:2,name:'Анастасія Авдєєнко'}],events:[{id:'e1',title:'Репетиція виступу',date:D.events[2]?D.events[2].date:'',time:'18:00'}]},
+    {name:'Стаття',is_event:false,members:[{id:3,name:'Марія Карпенко'},{id:4,name:'Ольга Присяжна'}]}]}}
+  function loadForm(){
+    if(!LIVE){FORM=demoForm();return Promise.resolve()}
+    return api('/api/form-options').then(function(r){FORM=r});
+  }
+  function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+  function opt(v,t,sel){return '<option value="'+esc(v)+'"'+(sel?' selected':'')+'>'+esc(t)+'</option>'}
+  function closeSheet(){$('#sheet').hidden=true;$('#box').innerHTML=''}
+  function openSheet(html){$('#box').innerHTML=html;$('#sheet').hidden=false}
+  function eventForm(){
+    var ps=FORM.event_projects;
+    openSheet('<h3>Нова подія</h3>'+
+      '<div class="fld"><label for="f-proj">Проєкт</label><select id="f-proj">'+ps.map(function(p){return opt(p,p)}).join('')+'</select></div>'+
+      '<div class="fld"><label for="f-title">Що заплановано</label><input id="f-title" type="text" maxlength="200" placeholder="Зйомка зі спікеркою"></div>'+
+      '<div class="two"><div class="fld"><label for="f-date">Дата</label><input id="f-date" type="date" min="'+today()+'" value="'+today()+'"></div>'+
+      '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="12:00"></div></div>'+
+      '<div class="fld"><label for="f-place">Місце (необовʼязково)</label><input id="f-place" type="text" maxlength="200"></div>'+
+      '<p class="hint">Подію буде додано в календар, колеги з проєкту отримають сповіщення.</p><p class="err" id="f-err" hidden></p>'+
+      '<div class="acts"><button class="btn pri" id="f-ok" data-sub="event">Додати в календар</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
+  }
+  function taskProj(){var n=$('#f-proj').value;return FORM.task_projects.filter(function(p){return p.name===n})[0]}
+  function taskFields(){
+    var p=taskProj(); if(!p) return;
+    $('#f-who').innerHTML=p.members.map(function(m){return opt(m.id,m.name)}).join('');
+    if(p.is_event){
+      $('#f-when').innerHTML='<label for="f-ev">Захід</label><select id="f-ev">'+(p.events.length?p.events.map(function(e){return opt(e.id,e.title+' · '+fmtShort(e.date)+' '+e.time)}).join(''):opt('','Немає запланованих заходів'))+'</select>';
+    }else{
+      $('#f-when').innerHTML='<label for="f-dl">Дедлайн</label><input id="f-dl" type="date" min="'+today()+'" value="'+today()+'">';
+    }
+  }
+  function taskForm(){
+    var ps=FORM.task_projects;
+    openSheet('<h3>Нова задача</h3>'+
+      '<div class="fld"><label for="f-proj">Проєкт</label><select id="f-proj">'+ps.map(function(p){return opt(p.name,p.name)}).join('')+'</select></div>'+
+      '<div class="fld"><label for="f-title">Що зробити</label><input id="f-title" type="text" maxlength="300" placeholder="Стаття про школу"></div>'+
+      '<div class="fld"><label for="f-who">Виконавець</label><select id="f-who"></select></div>'+
+      '<div class="fld" id="f-when"></div>'+
+      '<p class="hint">Виконавець отримає сповіщення в боті й зможе взяти задачу в роботу.</p><p class="err" id="f-err" hidden></p>'+
+      '<div class="acts"><button class="btn pri" id="f-ok" data-sub="task">Поставити задачу</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
+    taskFields();
+    $('#f-proj').addEventListener('change',taskFields);
+  }
+  function openAdd(kind){
+    loadForm().then(function(){
+      if(kind==='event'){ if(!FORM.event_projects.length){toast('Немає проєктів, у які ви можете додавати події.');return} eventForm(); }
+      else { if(!FORM.task_projects.length){toast('Немає проєктів, де ви редактор.');return} taskForm(); }
+    }).catch(function(){toast('Не вдалося відкрити форму. Спробуйте ще раз.')});
+  }
+  function ferr(t){var e=$('#f-err');e.textContent=t;e.hidden=!t}
+  function submit(kind){
+    var title=$('#f-title').value.trim(), body, url;
+    if(!title){ferr('Напишіть назву.');return}
+    if(kind==='event'){
+      body={project:$('#f-proj').value,title:title,date:$('#f-date').value,time:$('#f-time').value,place:$('#f-place').value.trim()};
+      if(!body.date||!body.time){ferr('Вкажіть дату й час.');return}
+      url='/api/event';
+    }else{
+      var p=taskProj();
+      body={project:p.name,title:title,assignee_id:+$('#f-who').value};
+      if(p.is_event){body.event_id=$('#f-ev').value; if(!body.event_id){ferr('Спочатку додайте захід у календар.');return}}
+      else{body.deadline=$('#f-dl').value; if(!body.deadline){ferr('Вкажіть дедлайн.');return}}
+      url='/api/task';
+    }
+    ferr('');$('#f-ok').disabled=true;
+    if(!LIVE){closeSheet();toast('Тестові дані: нічого не збережено й не надіслано.');return}
+    fetch(API_BASE+url,{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){return r.json()}).then(function(r){
+        if(!r.ok){ferr(r.note||'Не вдалося зберегти.');$('#f-ok').disabled=false;return}
+        closeSheet();toast(r.note||'Готово');
+        api('/api/events').then(function(x){D.events=x.events;cal()});
+        api('/api/tasks').then(function(x){D.tasks=x.tasks;tasks()});
+      }).catch(function(){ferr('Не вдалося зберегти. Спробуйте ще раз.');$('#f-ok').disabled=false});
+  }
+  var PH={};
+  function initials(n){var w=n.replace(/[()]/g,' ').split(/\s+/).filter(Boolean);return ((w[0]||'?')[0]+(w[1]?w[1][0]:'')).toUpperCase()}
+  function loadPhoto(id,el){
+    if(!LIVE||PH[id]===null) return;
+    if(PH[id]){el.innerHTML='<img alt="" src="'+PH[id]+'">';return}
+    fetch(API_BASE+'/api/photo/'+id,{headers:{'X-Init-Data':INIT}}).then(function(r){if(!r.ok) throw 0;return r.blob()})
+      .then(function(b){PH[id]=URL.createObjectURL(b);el.innerHTML='<img alt="" src="'+PH[id]+'">'})
+      .catch(function(){PH[id]=null});
+  }
+  function team(){
+    if(!D.team.length){$('#team').innerHTML='';say('team','Список команди порожній.');return}
+    say('team','');
+    $('#team').innerHTML=D.team.map(function(m){
+      var open=st.open===String(m.id), n=m.tasks.length;
+      var body=open?'<div class="pbody">'+(n?m.tasks.map(function(t){return '<div class="pt"><div><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>до '+fmtShort(t.deadline)+'</p></div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join(''):'<p class="hint" style="padding-top:10px">Відкритих задач немає.</p>')+'</div>':'';
+      return '<div class="pcard"><button class="phead" data-tm="'+m.id+'" aria-expanded="'+open+'"><span class="av" data-av="'+m.id+'">'+esc(initials(m.name))+'</span><span class="pinfo"><b>'+esc(m.name)+'</b><span>'+esc(m.position||'')+'</span></span><span class="cnt'+(n?' has':'')+'">'+n+'</span></button>'+body+'</div>';
+    }).join('');
+    $$('#team .av').forEach(function(el){loadPhoto(el.dataset.av,el)});
   }
   function show(v){
     st.view=v;
     $$('nav button').forEach(function(x){x.setAttribute('aria-selected',x.dataset.v===v)});
-    ['stats','cal','tasks'].forEach(function(n){$('#v-'+n).hidden=n!==v});
+    ['stats','cal','tasks','team'].forEach(function(n){$('#v-'+n).hidden=n!==v});
     window.scrollTo(0,0);
   }
   document.addEventListener('click',function(ev){
@@ -235,21 +398,29 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     else if(b.dataset.m){st.m=b.dataset.m;$$('#metric button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});stats();}
     else if(b.dataset.i!==undefined){st.net=+b.dataset.i;stats();}
     else if(b.dataset.p){st.proj=b.dataset.p;tasks();}
+    else if(b.dataset.cp){st.cproj=b.dataset.cp;cal();}
+    else if(b.dataset.act){act(b.dataset.act,b.dataset.id);}
+    else if(b.dataset.tm){st.open=st.open===b.dataset.tm?'':b.dataset.tm;team();}
+    else if(b.dataset.add){openAdd(b.dataset.add);}
+    else if(b.dataset.sub){if(b.dataset.sub==='cancel')closeSheet();else submit(b.dataset.sub);}
   });
 
+  $('#sheet').addEventListener('click',function(e){if(e.target===$('#sheet'))closeSheet()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet()});
   function boot(){
-    if(!LIVE){demo();stats();cal();tasks();return}
+    if(!LIVE){demo();$('#add-ev').hidden=false;$('#add-tk').hidden=false;stats();cal();tasks();team();return}
     say('cal','Завантажую…');
     api('/api/me').then(function(me){
-      D.me=me;
+      D.me=me;$('#add-ev').hidden=!me.can_event;$('#add-tk').hidden=!me.can_task;
       if(!me.stats){$('#tab-stats').hidden=true;show('cal')}
       var jobs=[api('/api/events').then(function(r){D.events=r.events;cal()}),
                 api('/api/tasks').then(function(r){D.tasks=r.tasks;tasks()})];
+      jobs.push(api('/api/team').then(function(r){D.team=r.members;team()}));
       if(me.stats) jobs.push(api('/api/stats?months=12').then(function(r){D.labels=r.labels;D.nets=r.nets;stats()}));
       return Promise.all(jobs);
     }).catch(function(e){
       var t=e&&e.code===403?'Цей застосунок лише для команди Thebuchacity. Попросіть додати ваш Telegram ID у таблицю.':'Не вдалося завантажити дані. Закрийте застосунок і відкрийте знову.';
-      ['stats','cal','tasks'].forEach(function(n){say(n,t)});
+      ['stats','cal','tasks','team'].forEach(function(n){say(n,t)});
     });
   }
   boot();
