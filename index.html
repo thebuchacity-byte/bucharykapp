@@ -58,15 +58,17 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
 .tk p{margin:2px 0 0;color:var(--muted);font-size:13px}
 .st{flex:none;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid currentColor}
 .st.new{color:var(--muted)} .st.work{color:var(--warn)} .st.done{color:var(--good)}
+.note{color:var(--muted);text-align:center;padding:24px 8px;margin:0}
+.st.reported{color:var(--accent)}
 [hidden]{display:none!important}
 </style>
 </head><body><div id="app">
   <header>
     <div class="brand">Бучарик<small>Thebuchacity</small></div>
-    <span class="demo">тестові дані</span>
+    <span class="demo" id="demo" hidden>тестові дані</span>
   </header>
   <main>
-    <section id="v-stats" aria-label="Статистика">
+    <section id="v-stats" aria-label="Статистика"><p class="note" id="msg-stats" hidden></p>
       <div style="display:flex;flex-direction:column;gap:14px">
         <div class="seg" id="metric">
           <button data-m="followers" aria-pressed="true">Підписники</button>
@@ -80,11 +82,11 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
           </div>
           <svg class="chart" id="chart" viewBox="0 0 360 190" role="img" aria-label="Графік за 12 місяців"></svg>
         </div>
-        <div class="panel"><h2 style="margin-bottom:4px">Усі мережі, жовтень 26</h2><div class="rows" id="all"></div></div>
+        <div class="panel"><h2 style="margin-bottom:4px">Усі мережі, останній місяць</h2><div class="rows" id="all"></div></div>
       </div>
     </section>
-    <section id="v-cal" aria-label="Календар" hidden><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div></section>
-    <section id="v-tasks" aria-label="Задачі" hidden>
+    <section id="v-cal" aria-label="Календар" hidden><p class="note" id="msg-cal" hidden></p><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div></section>
+    <section id="v-tasks" aria-label="Задачі" hidden><p class="note" id="msg-tasks" hidden></p>
       <div style="display:flex;flex-direction:column;gap:14px">
         <div class="chips" id="proj"></div>
         <div id="tasks" style="display:flex;flex-direction:column;gap:10px"></div>
@@ -92,101 +94,165 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     </section>
   </main>
   <nav><div class="in" role="tablist">
-    <button role="tab" data-v="stats" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Статистика</button>
+    <button role="tab" id="tab-stats" data-v="stats" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Статистика</button>
     <button role="tab" data-v="cal" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Календар</button>
     <button role="tab" data-v="tasks" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12M3 6l1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>Задачі</button>
   </div></nav>
 </div>
 <script>
 (function(){
+  /* Адреса API бота на Railway. Порожньо = показувати тестові дані. */
+  var API_BASE='';
   var tg=window.Telegram&&window.Telegram.WebApp; if(tg){try{tg.ready();tg.expand();}catch(e){}}
+  var INIT=(tg&&tg.initData)||'';
+  var LIVE=!!(API_BASE&&INIT);
   var $=function(s){return document.querySelector(s)}, $$=function(s){return [].slice.call(document.querySelectorAll(s))};
+  var esc=function(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+  var WD=['Неділя','Понеділок','Вівторок','Середа','Четвер','Пʼятниця','Субота'];
+  var MG=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
   var MON=['січ','лют','бер','кві','тра','чер','лип','сер','вер','жов','лис','гру'];
-  var labels=[]; for(var i=0;i<12;i++){var m=(9+i)%12; labels.push(MON[m]+' '+(m>8?25:26)); }
-  /* Тестові дані: вигадані, лише щоб показати вигляд. Справжні числа прийдуть із таблиці статистики. */
-  var NETS=[
-    {n:'Instagram',f:[21800,22050,22300,22650,22900,23300,23700,24100,24600,25100,25500,25900],r:[410,455,430,520,610,580,700,760,720,840,910,1030]},
-    {n:'Facebook',f:[31200,31300,31380,31500,31600,31650,31760,31840,31900,32010,32100,32200],r:[240,251,238,262,280,270,301,296,320,334,341,360]},
-    {n:'YouTube',f:[3600,3640,3710,3780,3850,3940,4020,4120,4190,4300,4420,4560],r:[52,48,61,59,70,66,84,90,87,102,118,131]},
-    {n:'TikTok',f:[20600,20800,21100,21500,21800,22300,22600,23100,23500,24100,24600,25200],r:[160,210,190,260,330,300,410,380,450,520,610,690]},
-    {n:'Telegram',f:[10400,10440,10510,10570,10640,10700,10790,10850,10940,11010,11100,11190],r:null},
-    {n:'Threads',f:[1200,1260,1330,1390,1480,1550,1640,1700,1800,1890,1980,2090],r:[18,22,20,27,31,29,38,41,44,52,57,63]},
-    {n:'Сайт',f:null,r:[38,41,36,44,52,49,58,61,57,66,72,81]}
-  ];
   var fmt=function(v){return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ')};
-  var kfmt=function(v){return v>=1000? (v/1000).toFixed(v>=10000?0:1).replace('.',',')+' тис.':fmt(v)};
+  var dec=function(x){return x.toFixed(1).replace('.',',').replace(',0','')};
+  var big=function(v){var a=Math.abs(v);return a>=1e6?dec(v/1e6)+' млн':a>=1e4?Math.round(v/1e3)+' тис.':a>=1e3?dec(v/1e3)+' тис.':fmt(v)};
+  var axis=function(v){var a=Math.abs(v);return a>=1e6?dec(v/1e6)+'M':a>=1e4?Math.round(v/1e3)+'k':a>=1e3?dec(v/1e3)+'k':Math.round(v)};
   var st={m:'followers',net:0,view:'stats',proj:'Усі'};
+  var D={labels:[],nets:[],events:[],tasks:[],me:{stats:true,tasks:true}};
 
-  function avail(){return NETS.map(function(x,i){return {x:x,i:i}}).filter(function(o){return o.x[st.m==='followers'?'f':'r']})}
+  function demo(){
+    var L=[],now=new Date();
+    for(var i=11;i>=0;i--){var d=new Date(now.getFullYear(),now.getMonth()-i,1);L.push(MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2));}
+    var k=1000;
+    D.labels=L;
+    D.nets=[
+      {n:'Instagram',f:[21800,22050,22300,22650,22900,23300,23700,24100,24600,25100,25500,25900],r:[410,455,430,520,610,580,700,760,720,840,910,1030].map(function(x){return x*k})},
+      {n:'Facebook',f:[31200,31300,31380,31500,31600,31650,31760,31840,31900,32010,32100,32200],r:[240,251,238,262,280,270,301,296,320,334,341,360].map(function(x){return x*k})},
+      {n:'YouTube',f:[3600,3640,3710,3780,3850,3940,4020,4120,4190,4300,4420,4560],r:[52,48,61,59,70,66,84,90,87,102,118,131].map(function(x){return x*k})},
+      {n:'TikTok',f:[20600,20800,21100,21500,21800,22300,22600,23100,23500,24100,24600,25200],r:[160,210,190,260,330,300,410,380,450,520,610,690].map(function(x){return x*k})},
+      {n:'Telegram',f:[10400,10440,10510,10570,10640,10700,10790,10850,10940,11010,11100,11190]},
+      {n:'Threads',f:[1200,1260,1330,1390,1480,1550,1640,1700,1800,1890,1980,2090],r:[18,22,20,27,31,29,38,41,44,52,57,63].map(function(x){return x*k})},
+      {n:'Сайт',r:[38,41,36,44,52,49,58,61,57,66,72,81].map(function(x){return x*k})}
+    ];
+    function iso(n){var d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+    D.events=[
+      {date:iso(0),time:'19:00',title:'Планерка команди',place:'Meet',project:'Усі'},
+      {date:iso(3),time:'11:00',title:'Зйомка з Валентиною',place:'Студія',project:'Подкаст'},
+      {date:iso(5),time:'14:30',title:'Виїзне інтервʼю, школа №4',place:'Буча',project:'Стаття'},
+      {date:iso(5),time:'18:00',title:'Репетиція виступу',place:'Офіс',project:'Заходи'},
+      {date:iso(8),time:'12:00',title:'Суботні фотки',place:'Чат медіа',project:'Усі'},
+      {date:iso(13),time:'10:00',title:'Круглий стіл: дезінформація',place:'Київ',project:'Дезінфо'}
+    ];
+    D.tasks=[
+      {title:'Стаття про школу №4',assignee:'Марія Карпенко',deadline:iso(21),status:'work',project:'Стаття'},
+      {title:'Підготувати сцену й світло',assignee:'Богдан Макаренко',deadline:iso(12),status:'new',project:'Заходи'},
+      {title:'Монтаж випуску з Валентиною',assignee:'Богдан Макаренко',deadline:iso(7),status:'work',project:'Подкаст'},
+      {title:'Огляд наративів тижня',assignee:'Мар’яна Шерстюк',deadline:iso(4),status:'reported',project:'Дезінфо'},
+      {title:'Запросити спікерів на захід',assignee:'Анастасія Авдєєнко',deadline:iso(6),status:'new',project:'Заходи'}
+    ];
+    $('#demo').hidden=false;
+  }
+
+  function api(path){
+    return fetch(API_BASE+path,{headers:{'X-Init-Data':INIT}}).then(function(r){
+      if(r.status===403) throw {code:403};
+      if(!r.ok) throw {code:r.status};
+      return r.json();
+    });
+  }
+  function say(id,t){var n=$('#msg-'+id);n.textContent=t||'';n.hidden=!t;}
+
+  function pts(d){var o=[];d.forEach(function(v,i){if(v!=null)o.push([i,v])});return o}
+  function key(){return st.m==='followers'?'f':'r'}
+  function avail(){return D.nets.map(function(x,i){return {x:x,i:i}}).filter(function(o){return o.x[key()]&&pts(o.x[key()]).length>=2})}
   function drawNets(){
-    var list=avail(); if(!list.some(function(o){return o.i===st.net})) st.net=list[0].i;
-    $('#nets').innerHTML=list.map(function(o){return '<button class="chip" data-i="'+o.i+'" aria-pressed="'+(o.i===st.net)+'">'+o.x.n+'</button>'}).join('');
+    var list=avail();
+    if(!list.length){$('#nets').innerHTML='';return false}
+    if(!list.some(function(o){return o.i===st.net})) st.net=list[0].i;
+    $('#nets').innerHTML=list.map(function(o){return '<button class="chip" data-i="'+o.i+'" aria-pressed="'+(o.i===st.net)+'">'+esc(o.x.n)+'</button>'}).join('');
+    return true;
   }
   function drawChart(){
-    var net=NETS[st.net], key=st.m==='followers'?'f':'r', d=net[key];
-    var last=d[d.length-1], prev=d[d.length-2], ch=last-prev, pc=ch/prev*100;
-    var unit=st.m==='followers'?'підписників':(net.n==='Сайт'?'переглядів сайту за місяць, тис.':'охоплення за місяць, тис.');
-    $('#cap').textContent=net.n+' · '+(st.m==='followers'?'підписники':'охоплення');
-    $('#big').textContent= st.m==='followers'? fmt(last) : (net.n==='Сайт'? last+' тис.' : last+' тис.');
+    var net=D.nets[st.net], P=pts(net[key()]), n=net[key()].length;
+    var last=P[P.length-1][1], prev=P[P.length-2][1], ch=last-prev, pc=prev?ch/prev*100:0;
+    $('#cap').textContent=net.n+' · '+(st.m==='followers'?'підписники':(net.n==='Сайт'?'перегляди за місяць':'охоплення за місяць'));
+    $('#big').textContent=st.m==='followers'?fmt(last):big(last);
     $('#dl').className='delta '+(ch>=0?'up':'down');
-    $('#dl').textContent=(ch>=0?'+':'−')+(st.m==='followers'?fmt(Math.abs(ch)):Math.abs(ch)+' тис.')+' ('+(ch>=0?'+':'−')+Math.abs(pc).toFixed(1).replace('.',',')+'%) за місяць';
+    $('#dl').textContent=(ch>=0?'+':'−')+(st.m==='followers'?fmt(Math.abs(ch)):big(Math.abs(ch)))+' ('+(ch>=0?'+':'−')+Math.abs(pc).toFixed(1).replace('.',',')+'%) до попереднього місяця';
     var W=360,H=190,L=44,R=14,T=14,B=26;
-    var mn=Math.min.apply(null,d), mx=Math.max.apply(null,d), pad=(mx-mn)*0.15||mx*0.05;
+    var vals=P.map(function(p){return p[1]}), mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), pad=(mx-mn)*0.15||Math.abs(mx)*0.05||1;
     var lo=mn-pad, hi=mx+pad;
-    var x=function(i){return L+(W-L-R)*i/(d.length-1)}, y=function(v){return T+(H-T-B)*(1-(v-lo)/(hi-lo))};
+    var x=function(i){return L+(W-L-R)*i/Math.max(1,n-1)}, y=function(v){return T+(H-T-B)*(1-(v-lo)/(hi-lo))};
     var s='';
     for(var t=0;t<4;t++){var v=lo+(hi-lo)*t/3, yy=y(v);
       s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'" stroke="var(--line)" stroke-width="1"/>';
-      s+='<text x="'+(L-6)+'" y="'+(yy+4)+'" text-anchor="end">'+(st.m==='followers'?kfmt(v).replace(' тис.','k'):Math.round(v))+'</text>';}
-    var pts=d.map(function(v,i){return x(i)+','+y(v)}).join(' ');
-    s+='<polygon points="'+L+','+(H-B)+' '+pts+' '+(W-R)+','+(H-B)+'" fill="var(--accent)" opacity=".12"/>';
-    s+='<polyline points="'+pts+'" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
-    s+='<circle cx="'+x(d.length-1)+'" cy="'+y(last)+'" r="4.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>';
-    [0,4,8].forEach(function(i){s+='<text x="'+x(i)+'" y="'+(H-6)+'" text-anchor="'+(i===0?'start':'middle')+'">'+labels[i]+'</text>';});
-    s+='<text x="'+x(d.length-1)+'" y="'+(H-6)+'" text-anchor="end">'+labels[d.length-1]+'</text>';
+      s+='<text x="'+(L-6)+'" y="'+(yy+4)+'" text-anchor="end">'+axis(v)+'</text>';}
+    var line=P.map(function(p){return x(p[0])+','+y(p[1])}).join(' ');
+    s+='<polygon points="'+x(P[0][0])+','+(H-B)+' '+line+' '+x(P[P.length-1][0])+','+(H-B)+'" fill="var(--accent)" opacity=".12"/>';
+    s+='<polyline points="'+line+'" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
+    s+='<circle cx="'+x(P[P.length-1][0])+'" cy="'+y(last)+'" r="4.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>';
+    var idx=[0,Math.round((n-1)/3),Math.round(2*(n-1)/3)].filter(function(i){return n-1-i>=3});
+    idx.forEach(function(i){s+='<text x="'+x(i)+'" y="'+(H-6)+'" text-anchor="'+(i===0?'start':'middle')+'">'+esc(D.labels[i])+'</text>';});
+    s+='<text x="'+x(n-1)+'" y="'+(H-6)+'" text-anchor="end">'+esc(D.labels[n-1])+'</text>';
     $('#chart').innerHTML=s;
   }
   function drawAll(){
-    var key=st.m==='followers'?'f':'r';
-    $('#all').innerHTML=avail().map(function(o){var d=o.x[key],l=d[11],p=d[10],c=(l-p)/p*100;
-      return '<button class="row" data-i="'+o.i+'"><b>'+o.x.n+'</b><span class="num">'+(st.m==='followers'?fmt(l):l+' тис.')+'<br><span class="delta '+(c>=0?'up':'down')+'">'+(c>=0?'+':'−')+Math.abs(c).toFixed(1).replace('.',',')+'%</span></span></button>'}).join('');
+    $('#all').innerHTML=avail().map(function(o){var P=pts(o.x[key()]),l=P[P.length-1][1],p=P[P.length-2][1],c=p?(l-p)/p*100:0;
+      return '<button class="row" data-i="'+o.i+'"><b>'+esc(o.x.n)+'</b><span class="num">'+(st.m==='followers'?fmt(l):big(l))+'<br><span class="delta '+(c>=0?'up':'down')+'">'+(c>=0?'+':'−')+Math.abs(c).toFixed(1).replace('.',',')+'%</span></span></button>'}).join('');
   }
-  function stats(){drawNets();drawChart();drawAll();}
-
-  var EV=[
-    {d:'Пʼятниця, 9 жовтня',e:[{t:'19:00',n:'Планерка команди',p:'Meet',g:'Усі'}]},
-    {d:'Понеділок, 12 жовтня',e:[{t:'11:00',n:'Зйомка з Валентиною',p:'Студія',g:'Подкаст'}]},
-    {d:'Середа, 14 жовтня',e:[{t:'14:30',n:'Виїзне інтервʼю, школа №4',p:'Буча',g:'Стаття'},{t:'18:00',n:'Репетиція виступу',p:'Офіс',g:'Заходи'}]},
-    {d:'Субота, 17 жовтня',e:[{t:'12:00',n:'Суботні фотки',p:'Чат медіа',g:'Усі'}]},
-    {d:'Четвер, 22 жовтня',e:[{t:'10:00',n:'Круглий стіл: дезінформація',p:'Київ',g:'Дезінфо'}]}
-  ];
-  $('#cal').innerHTML=EV.map(function(day){return '<div class="day"><h2>'+day.d+'</h2>'+day.e.map(function(e){return '<div class="ev"><time>'+e.t+'</time><div><b>'+e.n+'</b><span class="tag">'+e.g+'</span><p>'+e.p+'</p></div></div>'}).join('')+'</div>'}).join('');
-
-  var TK=[
-    {n:'Стаття про школу №4',who:'Марія Карпенко',due:'30 жовт.',s:'work',p:'Стаття'},
-    {n:'Підготувати сцену й світло',who:'Богдан Макаренко',due:'21 жовт.',s:'new',p:'Заходи'},
-    {n:'Монтаж випуску з Валентиною',who:'Богдан Макаренко',due:'16 жовт.',s:'work',p:'Подкаст'},
-    {n:'Огляд наративів тижня',who:'Мар’яна Шерстюк',due:'13 жовт.',s:'done',p:'Дезінфо'},
-    {n:'Запросити спікерів на захід',who:'Анастасія Авдєєнко',due:'15 жовт.',s:'new',p:'Заходи'},
-    {n:'Фактчек цитат у матеріалі',who:'Ольга Присяжна',due:'28 жовт.',s:'new',p:'Стаття'}
-  ];
-  var SN={new:'Нова',work:'В роботі',done:'Готово'};
-  var PR=['Усі','Стаття','Заходи','Подкаст','Дезінфо'];
+  function stats(){
+    if(!D.nets.length){$('#v-stats').querySelectorAll('.seg,.chips,.panel').forEach(function(e){e.hidden=true});say('stats','У таблиці статистики ще немає даних для графіків.');return}
+    say('stats','');$('#v-stats').querySelectorAll('.seg,.chips,.panel').forEach(function(e){e.hidden=false});
+    if(!drawNets()){$('#v-stats').querySelectorAll('.chips,.panel').forEach(function(e){e.hidden=true});say('stats','Для цього показника поки немає даних.');return}
+    drawChart();drawAll();
+  }
+  function fmtDay(iso){var p=iso.split('-'),d=new Date(+p[0],+p[1]-1,+p[2]);return WD[d.getDay()]+', '+d.getDate()+' '+MG[d.getMonth()]}
+  function fmtShort(iso){var p=iso.split('-');return +p[2]+' '+MON[+p[1]-1]+'.'}
+  function cal(){
+    if(!D.events.length){$('#cal').innerHTML='';say('cal','Подій на найближчі три місяці немає.');return}
+    say('cal','');
+    var days=[],map={};
+    D.events.forEach(function(e){if(!map[e.date]){map[e.date]={d:e.date,e:[]};days.push(map[e.date])}map[e.date].e.push(e)});
+    $('#cal').innerHTML=days.map(function(day){return '<div class="day"><h2>'+fmtDay(day.d)+'</h2>'+day.e.map(function(e){return '<div class="ev"><time>'+esc(e.time)+'</time><div><b>'+esc(e.title)+'</b><span class="tag">'+esc(e.project)+'</span>'+(e.place?'<p>'+esc(e.place)+'</p>':'')+'</div></div>'}).join('')+'</div>'}).join('');
+  }
+  var SN={new:'Нова',work:'В роботі',reported:'Здана',done:'Готово'};
   function tasks(){
-    $('#proj').innerHTML=PR.map(function(p){return '<button class="chip" data-p="'+p+'" aria-pressed="'+(p===st.proj)+'">'+p+'</button>'}).join('');
-    $('#tasks').innerHTML=TK.filter(function(t){return st.proj==='Усі'||t.p===st.proj}).map(function(t){
-      return '<div class="tk"><div style="min-width:0"><b>'+t.n+'</b><span class="tag">'+t.p+'</span><p>'+t.who+' · до '+t.due+'</p></div><span class="st '+t.s+'">'+SN[t.s]+'</span></div>'}).join('');
+    var PR=['Усі'];D.tasks.forEach(function(t){if(PR.indexOf(t.project)<0)PR.push(t.project)});
+    if(PR.indexOf(st.proj)<0) st.proj='Усі';
+    if(!D.tasks.length){$('#proj').innerHTML='';$('#tasks').innerHTML='';say('tasks','Відкритих задач немає.');return}
+    say('tasks','');
+    $('#proj').innerHTML=PR.length>2?PR.map(function(p){return '<button class="chip" data-p="'+esc(p)+'" aria-pressed="'+(p===st.proj)+'">'+esc(p)+'</button>'}).join(''):'';
+    $('#tasks').innerHTML=D.tasks.filter(function(t){return st.proj==='Усі'||t.project===st.proj}).map(function(t){
+      return '<div class="tk"><div style="min-width:0"><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>'+esc(t.assignee)+' · до '+fmtShort(t.deadline)+'</p></div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join('');
+  }
+  function show(v){
+    st.view=v;
+    $$('nav button').forEach(function(x){x.setAttribute('aria-selected',x.dataset.v===v)});
+    ['stats','cal','tasks'].forEach(function(n){$('#v-'+n).hidden=n!==v});
+    window.scrollTo(0,0);
   }
   document.addEventListener('click',function(ev){
     var b=ev.target.closest('button'); if(!b) return;
-    if(b.dataset.v){st.view=b.dataset.v;
-      $$('nav button').forEach(function(x){x.setAttribute('aria-selected',x===b)});
-      ['stats','cal','tasks'].forEach(function(v){$('#v-'+v).hidden=v!==st.view}); window.scrollTo(0,0);}
+    if(b.dataset.v) show(b.dataset.v);
     else if(b.dataset.m){st.m=b.dataset.m;$$('#metric button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});stats();}
     else if(b.dataset.i!==undefined){st.net=+b.dataset.i;stats();}
     else if(b.dataset.p){st.proj=b.dataset.p;tasks();}
   });
-  stats();tasks();
+
+  function boot(){
+    if(!LIVE){demo();stats();cal();tasks();return}
+    say('cal','Завантажую…');
+    api('/api/me').then(function(me){
+      D.me=me;
+      if(!me.stats){$('#tab-stats').hidden=true;show('cal')}
+      var jobs=[api('/api/events').then(function(r){D.events=r.events;cal()}),
+                api('/api/tasks').then(function(r){D.tasks=r.tasks;tasks()})];
+      if(me.stats) jobs.push(api('/api/stats?months=12').then(function(r){D.labels=r.labels;D.nets=r.nets;stats()}));
+      return Promise.all(jobs);
+    }).catch(function(e){
+      var t=e&&e.code===403?'Цей застосунок лише для команди Thebuchacity. Попросіть додати ваш Telegram ID у таблицю.':'Не вдалося завантажити дані. Закрийте застосунок і відкрийте знову.';
+      ['stats','cal','tasks'].forEach(function(n){say(n,t)});
+    });
+  }
+  boot();
 })();
 </script>
 </body></html>
