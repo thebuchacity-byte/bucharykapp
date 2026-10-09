@@ -102,7 +102,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
 <script>
 (function(){
   /* Адреса API бота на Railway. Порожньо = показувати тестові дані. */
-  var API_BASE='';
+  var API_BASE='https://media-bot-production-ef31.up.railway.app';
   var tg=window.Telegram&&window.Telegram.WebApp; if(tg){try{tg.ready();tg.expand();}catch(e){}}
   var INIT=(tg&&tg.initData)||'';
   var LIVE=!!(API_BASE&&INIT);
