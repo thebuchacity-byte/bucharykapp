@@ -49,6 +49,18 @@ svg.chart text{font:11px var(--mono);fill:var(--muted)}
 .num{font-variant-numeric:tabular-nums;text-align:right}
 h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
 .day{display:flex;flex-direction:column;gap:8px}
+.mh{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mh b{font:600 17px var(--font);text-transform:capitalize}
+.mh button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;width:40px;height:36px;font-size:18px;cursor:pointer}
+.mg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.mg .wd{font-size:11px;color:var(--muted);text-align:center;text-transform:uppercase;padding:2px 0}
+.mg button{position:relative;aspect-ratio:1/1;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;font:500 14px var(--font);cursor:pointer;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.mg button.out{opacity:.35}
+.mg button.today{border-color:var(--accent)}
+.mg button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mg .dots{display:flex;gap:2px;height:6px}
+.mg .dots i{width:5px;height:5px;border-radius:50%;background:var(--accent);display:block}
+.mg button[aria-pressed="true"] .dots i{background:var(--bg)}
 .ev{display:flex;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
 .ev time{font-family:var(--mono);font-size:13px;color:var(--accent);min-width:46px;padding-top:1px}
 .ev div{min-width:0}
@@ -101,7 +113,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     <span class="demo" id="demo" hidden>тестові дані</span>
   </header>
   <main>
-    <section id="v-stats" aria-label="Статистика"><p class="note" id="msg-stats" hidden></p>
+    <section id="v-stats" aria-label="Статистика" hidden><p class="note" id="msg-stats" hidden></p>
       <div style="display:flex;flex-direction:column;gap:14px">
         <div class="seg" id="metric">
           <button data-m="followers" aria-pressed="true">Підписники</button>
@@ -118,7 +130,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         <div class="panel"><h2 style="margin-bottom:4px">Усі мережі, останній місяць</h2><div class="rows" id="all"></div></div>
       </div>
     </section>
-    <section id="v-cal" aria-label="Календар" hidden><p class="note" id="msg-cal" hidden></p><div style="display:flex;flex-direction:column;gap:14px"><button class="btn pri addbtn" id="add-ev" data-add="event" hidden>＋ Нова подія</button><button class="btn addbtn" id="add-mt" data-add="meeting" hidden>🎥 Нова онлайн-зустріч</button><div class="chips" id="cproj"></div><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div></div></section>
+    <section id="v-cal" aria-label="Календар"><p class="note" id="msg-cal" hidden></p><div style="display:flex;flex-direction:column;gap:14px"><button class="btn pri addbtn" id="add-ev" data-add="event" hidden>＋ Нова подія</button><button class="btn addbtn" id="add-mt" data-add="meeting" hidden>🎥 Нова онлайн-зустріч</button><div class="chips" id="cproj"></div><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div></div></section>
     <section id="v-team" aria-label="Команда" hidden><p class="note" id="msg-team" hidden></p><p class="hint" style="margin:0 2px 10px">з — відкриті задачі, п — найближчі події, де людина зайнята</p><div id="team" style="display:flex;flex-direction:column;gap:10px"></div></section>
     <section id="v-tasks" aria-label="Задачі" hidden><p class="note" id="msg-tasks" hidden></p>
       <div style="display:flex;flex-direction:column;gap:14px">
@@ -131,10 +143,10 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true"><div class="box" id="box"></div></div>
   <div class="toast" id="toast" hidden role="status"></div>
   <nav><div class="in" role="tablist">
-    <button role="tab" id="tab-stats" data-v="stats" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Статистика</button>
-    <button role="tab" data-v="cal" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Календар</button>
+    <button role="tab" data-v="cal" aria-selected="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Календар</button>
     <button role="tab" data-v="tasks" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12M3 6l1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>Задачі</button>
     <button role="tab" data-v="team" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3.2 3.2 0 0 1 0 5.6M18 14.3c1.8.8 3 2.6 3 4.7"/></svg>Команда</button>
+    <button role="tab" id="tab-stats" data-v="stats" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Статистика</button>
   </div></nav>
 </div>
 <script>
@@ -153,7 +165,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   var dec=function(x){return x.toFixed(1).replace('.',',').replace(',0','')};
   var big=function(v){var a=Math.abs(v);return a>=1e6?dec(v/1e6)+' млн':a>=1e4?Math.round(v/1e3)+' тис.':a>=1e3?dec(v/1e3)+' тис.':fmt(v)};
   var axis=function(v){var a=Math.abs(v);return a>=1e6?dec(v/1e6)+'M':a>=1e4?Math.round(v/1e3)+'k':a>=1e3?dec(v/1e3)+'k':Math.round(v)};
-  var st={open:'',m:'followers',net:0,view:'stats',proj:'Усі',cproj:'Усі',confirm:'',busy:''};
+  var st={open:'',m:'followers',net:0,view:'cal',cm:null,csel:'',proj:'Усі',cproj:'Усі',confirm:'',busy:''};
   var D={labels:[],nets:[],events:[],tasks:[],team:[],me:{stats:true,tasks:true}};
 
   function demo(){
@@ -251,15 +263,31 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function fmtDay(iso){var p=iso.split('-'),d=new Date(+p[0],+p[1]-1,+p[2]);return WD[d.getDay()]+', '+d.getDate()+' '+MG[d.getMonth()]}
   function fmtShort(iso){var p=iso.split('-');return +p[2]+' '+MON[+p[1]-1]+'.'}
   function fmtDue(iso,due){return fmtShort(iso)+(due?', '+due:'')}
+  var MNAME=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
+  function pad2(n){return ('0'+n).slice(-2)}
+  function evHtml(e){return '<div class="ev"><time>'+esc(e.time)+'</time><div><b>'+esc(e.title)+'</b><span class="tag">'+esc(e.project)+'</span>'+(e.place?'<p>'+(/^https?:\/\//.test(e.place)?'<a href="'+esc(e.place)+'" target="_blank" rel="noopener">Відкрити Meet</a>':esc(e.place))+'</p>':'')+'</div></div>'}
   function cal(){
-    if(!D.events.length){$('#cal').innerHTML='';$('#cproj').innerHTML='';say('cal','Подій на найближчі три місяці немає.');return}
-    say('cal','');
+    var now=new Date(); if(!st.cm) st.cm={y:now.getFullYear(),m:now.getMonth()};
     var PR=['Усі'];D.events.forEach(function(e){if(e.project&&PR.indexOf(e.project)<0)PR.push(e.project)});
     if(PR.indexOf(st.cproj)<0) st.cproj='Усі';
     $('#cproj').innerHTML=PR.length>2?PR.map(function(p){return '<button class="chip" data-cp="'+esc(p)+'" aria-pressed="'+(p===st.cproj)+'">'+esc(p)+'</button>'}).join(''):'';
-    var days=[],map={};
-    D.events.filter(function(e){return st.cproj==='Усі'||e.project===st.cproj}).forEach(function(e){if(!map[e.date]){map[e.date]={d:e.date,e:[]};days.push(map[e.date])}map[e.date].e.push(e)});
-    $('#cal').innerHTML=days.map(function(day){return '<div class="day"><h2>'+fmtDay(day.d)+'</h2>'+day.e.map(function(e){return '<div class="ev"><time>'+esc(e.time)+'</time><div><b>'+esc(e.title)+'</b><span class="tag">'+esc(e.project)+'</span>'+(e.place?'<p>'+(/^https?:\/\//.test(e.place)?'<a href="'+esc(e.place)+'" target="_blank" rel="noopener">Відкрити Meet</a>':esc(e.place))+'</p>':'')+'</div></div>'}).join('')+'</div>'}).join('');
+    var evs=D.events.filter(function(e){return st.cproj==='Усі'||e.project===st.cproj});
+    var y=st.cm.y,m=st.cm.m,pre=y+'-'+pad2(m+1)+'-';
+    var by={};evs.forEach(function(e){(by[e.date]=by[e.date]||[]).push(e)});
+    var first=new Date(y,m,1),lead=(first.getDay()+6)%7,dim=new Date(y,m+1,0).getDate(),todayIso=today();
+    var h='<div class="mh"><button data-cm="-1" aria-label="Попередній місяць">‹</button><b>'+MNAME[m]+' '+y+'</b><button data-cm="1" aria-label="Наступний місяць">›</button></div><div class="mg">';
+    ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'].forEach(function(w){h+='<div class="wd">'+w+'</div>'});
+    for(var i=0;i<lead;i++) h+='<div></div>';
+    for(var d=1;d<=dim;d++){
+      var iso=pre+pad2(d),n=(by[iso]||[]).length;
+      h+='<button data-cd="'+iso+'" aria-pressed="'+(st.csel===iso)+'" class="'+(iso===todayIso?'today':'')+'">'+d+'<span class="dots">'+(n?'<i></i>':'')+(n>1?'<i></i>':'')+(n>2?'<i></i>':'')+'</span></button>';
+    }
+    h+='</div>';
+    var list=Object.keys(by).filter(function(k){return k.indexOf(pre)===0&&(!st.csel||k===st.csel)}).sort();
+    var total=0;list.forEach(function(k){total+=by[k].length});
+    h+='<p class="hint">'+(st.csel?fmtDay(st.csel)+': '+(total?total+' '+(total===1?'подія':'подій'):'подій немає')+'. Натисни день ще раз, щоб побачити весь місяць.':'Усі плани місяця: '+total+'. Натисни день, щоб відфільтрувати.')+'</p>';
+    h+=list.map(function(k){return '<div class="day"><h2>'+fmtDay(k)+'</h2>'+by[k].map(evHtml).join('')+'</div>'}).join('');
+    $('#cal').innerHTML=h;say('cal','');
   }
   var SN={new:'Нова',work:'В роботі',reported:'Здана',done:'Готово'};
   function tasks(){
@@ -437,6 +465,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     else if(b.dataset.i!==undefined){st.net=+b.dataset.i;stats();}
     else if(b.dataset.p){st.proj=b.dataset.p;tasks();}
     else if(b.dataset.cp){st.cproj=b.dataset.cp;cal();}
+    else if(b.dataset.cm){var mm=st.cm.m+ +b.dataset.cm,yy=st.cm.y;if(mm<0){mm=11;yy--}else if(mm>11){mm=0;yy++}st.cm={y:yy,m:mm};st.csel='';cal();}
+    else if(b.dataset.cd){st.csel=st.csel===b.dataset.cd?'':b.dataset.cd;cal();}
     else if(b.dataset.act){act(b.dataset.act,b.dataset.id);}
     else if(b.dataset.tm){st.open=st.open===b.dataset.tm?'':b.dataset.tm;team();}
     else if(b.dataset.add){openAdd(b.dataset.add);}
@@ -457,7 +487,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     say('cal','Завантажую…');
     api('/api/me').then(function(me){
       D.me=me;$('#add-ev').hidden=!me.can_event;$('#add-mt').hidden=!me.can_meeting;$('#add-tk').hidden=!me.can_task;
-      if(!me.stats){$('#tab-stats').hidden=true;show('cal')}
+      if(!me.stats){$('#tab-stats').hidden=true}
       var jobs=[api('/api/events').then(function(r){D.events=r.events;cal()}),
                 api('/api/tasks').then(function(r){D.tasks=r.tasks;tasks()})];
       jobs.push(api('/api/team').then(function(r){D.team=r.members;team()}));
