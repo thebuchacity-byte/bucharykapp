@@ -116,7 +116,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         <div class="panel"><h2 style="margin-bottom:4px">Усі мережі, останній місяць</h2><div class="rows" id="all"></div></div>
       </div>
     </section>
-    <section id="v-cal" aria-label="Календар" hidden><p class="note" id="msg-cal" hidden></p><div style="display:flex;flex-direction:column;gap:14px"><button class="btn pri addbtn" id="add-ev" data-add="event" hidden>＋ Нова подія</button><div class="chips" id="cproj"></div><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div></div></section>
+    <section id="v-cal" aria-label="Календар" hidden><p class="note" id="msg-cal" hidden></p><div style="display:flex;flex-direction:column;gap:14px"><button class="btn pri addbtn" id="add-ev" data-add="event" hidden>＋ Нова подія</button><button class="btn addbtn" id="add-mt" data-add="meeting" hidden>🎥 Нова онлайн-зустріч</button><div class="chips" id="cproj"></div><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div></div></section>
     <section id="v-team" aria-label="Команда" hidden><p class="note" id="msg-team" hidden></p><p class="hint" style="margin:0 2px 10px">з — відкриті задачі, п — найближчі події, де людина зайнята</p><div id="team" style="display:flex;flex-direction:column;gap:10px"></div></section>
     <section id="v-tasks" aria-label="Задачі" hidden><p class="note" id="msg-tasks" hidden></p>
       <div style="display:flex;flex-direction:column;gap:14px">
@@ -248,6 +248,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   }
   function fmtDay(iso){var p=iso.split('-'),d=new Date(+p[0],+p[1]-1,+p[2]);return WD[d.getDay()]+', '+d.getDate()+' '+MG[d.getMonth()]}
   function fmtShort(iso){var p=iso.split('-');return +p[2]+' '+MON[+p[1]-1]+'.'}
+  function fmtDue(iso,due){return fmtShort(iso)+(due?', '+due:'')}
   function cal(){
     if(!D.events.length){$('#cal').innerHTML='';$('#cproj').innerHTML='';say('cal','Подій на найближчі три місяці немає.');return}
     say('cal','');
@@ -256,7 +257,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     $('#cproj').innerHTML=PR.length>2?PR.map(function(p){return '<button class="chip" data-cp="'+esc(p)+'" aria-pressed="'+(p===st.cproj)+'">'+esc(p)+'</button>'}).join(''):'';
     var days=[],map={};
     D.events.filter(function(e){return st.cproj==='Усі'||e.project===st.cproj}).forEach(function(e){if(!map[e.date]){map[e.date]={d:e.date,e:[]};days.push(map[e.date])}map[e.date].e.push(e)});
-    $('#cal').innerHTML=days.map(function(day){return '<div class="day"><h2>'+fmtDay(day.d)+'</h2>'+day.e.map(function(e){return '<div class="ev"><time>'+esc(e.time)+'</time><div><b>'+esc(e.title)+'</b><span class="tag">'+esc(e.project)+'</span>'+(e.place?'<p>'+esc(e.place)+'</p>':'')+'</div></div>'}).join('')+'</div>'}).join('');
+    $('#cal').innerHTML=days.map(function(day){return '<div class="day"><h2>'+fmtDay(day.d)+'</h2>'+day.e.map(function(e){return '<div class="ev"><time>'+esc(e.time)+'</time><div><b>'+esc(e.title)+'</b><span class="tag">'+esc(e.project)+'</span>'+(e.place?'<p>'+(/^https?:\/\//.test(e.place)?'<a href="'+esc(e.place)+'" target="_blank" rel="noopener">Відкрити Meet</a>':esc(e.place))+'</p>':'')+'</div></div>'}).join('')+'</div>'}).join('');
   }
   var SN={new:'Нова',work:'В роботі',reported:'Здана',done:'Готово'};
   function tasks(){
@@ -271,7 +272,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       else if(t.mine&&t.status==='work'&&!t.event){
         acts=st.confirm===t.id?'<div class="acts"><span>Редактор отримає сповіщення.</span><button class="btn pri" data-act="done" data-id="'+esc(t.id)+'"'+dis+'>Так, виконано</button><button class="btn" data-act="no" data-id="'+esc(t.id)+'">Ні</button></div>'
           :'<div class="acts"><button class="btn" data-act="ask" data-id="'+esc(t.id)+'">Виконано</button></div>';}
-      return '<div class="tk"><div style="min-width:0"><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>'+esc(t.assignee)+' · до '+fmtShort(t.deadline)+'</p>'+acts+'</div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join('');
+      return '<div class="tk"><div style="min-width:0"><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>'+esc(t.assignee)+' · до '+fmtDue(t.deadline,t.due)+'</p>'+acts+'</div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join('');
   }
   var toastT;
   function toast(t){var n=$('#toast');n.textContent=t;n.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){n.hidden=true},3500)}
@@ -292,7 +293,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       }).catch(function(){st.busy='';tasks();toast('Не вдалося зберегти. Спробуйте ще раз.')});
   }
   var FORM=null;
-  function demoForm(){return {event_projects:['Заходи','Стаття'],task_projects:[
+  function demoForm(){return {people:[{id:1,name:'Богдан Макаренко'},{id:2,name:'Марія Карпенко'},{id:3,name:'Ольга Присяжна'},{id:4,name:'Анастасія Авдєєнко'}],event_projects:['Заходи','Стаття'],task_projects:[
     {name:'Заходи',is_event:true,members:[{id:1,name:'Богдан Макаренко'},{id:2,name:'Анастасія Авдєєнко'}],events:[{id:'e1',title:'Репетиція виступу',date:D.events[2]?D.events[2].date:'',time:'18:00'}]},
     {name:'Стаття',is_event:false,members:[{id:3,name:'Марія Карпенко'},{id:4,name:'Ольга Присяжна'}]}]}}
   function loadForm(){
@@ -314,14 +315,29 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<p class="hint">Подію буде додано в календар, колеги з проєкту отримають сповіщення.</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-sub="event">Додати в календар</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
   }
+  function whoChips(list,key){
+    return '<button type="button" class="chip" data-all="'+key+'" aria-pressed="false">Усі</button>'+list.map(function(m){return '<button type="button" class="chip" data-'+key+'="'+m.id+'" aria-pressed="false">'+esc(m.name)+'</button>'}).join('');
+  }
+  function pickedIds(key){return Array.prototype.map.call(document.querySelectorAll('#f-'+key+' [data-'+key+'][aria-pressed="true"]'),function(b){return +b.dataset[key]})}
+  function meetingForm(){
+    var d=new Date(Date.now()+3600000);d.setMinutes(0);
+    var hh=('0'+d.getHours()).slice(-2)+':00';
+    openSheet('<h3>Нова онлайн-зустріч</h3>'+
+      '<div class="fld"><label for="f-title">Назва</label><input id="f-title" type="text" maxlength="200" placeholder="Планерка по відео"></div>'+
+      '<div class="two"><div class="fld"><label for="f-date">Дата</label><input id="f-date" type="date" min="'+today()+'" value="'+today()+'"></div>'+
+      '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="'+hh+'"></div></div>'+
+      '<div class="fld"><label>З ким (можна кілька або всі)</label><div class="chips" id="f-pp">'+whoChips(FORM.people||[],'pp')+'</div></div>'+
+      '<p class="hint">Усі обрані отримають у Telegram посилання на постійний Meet команди, а за 10 хвилин до початку ще й нагадування.</p><p class="err" id="f-err" hidden></p>'+
+      '<div class="acts"><button class="btn pri" id="f-ok" data-sub="meeting">Створити зустріч</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
+  }
   function taskProj(){var n=$('#f-proj').value;return FORM.task_projects.filter(function(p){return p.name===n})[0]}
   function taskFields(){
     var p=taskProj(); if(!p) return;
-    $('#f-who').innerHTML=p.members.map(function(m){return opt(m.id,m.name)}).join('');
+    $('#f-who').innerHTML=whoChips(p.members,'who');
     if(p.is_event){
       $('#f-when').innerHTML='<label for="f-ev">Захід</label><select id="f-ev">'+(p.events.length?p.events.map(function(e){return opt(e.id,e.title+' · '+fmtShort(e.date)+' '+e.time)}).join(''):opt('','Немає запланованих заходів'))+'</select>';
     }else{
-      $('#f-when').innerHTML='<label for="f-dl">Дедлайн</label><input id="f-dl" type="date" min="'+today()+'" value="'+today()+'">';
+      $('#f-when').innerHTML='<div class="two"><div class="fld"><label for="f-dl">Дедлайн</label><input id="f-dl" type="date" min="'+today()+'" value="'+today()+'"></div><div class="fld"><label for="f-due">До години (необовʼязково)</label><input id="f-due" type="time"></div></div>';
     }
   }
   function taskForm(){
@@ -329,16 +345,17 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     openSheet('<h3>Нова задача</h3>'+
       '<div class="fld"><label for="f-proj">Проєкт</label><select id="f-proj">'+ps.map(function(p){return opt(p.name,p.name)}).join('')+'</select></div>'+
       '<div class="fld"><label for="f-title">Що зробити</label><input id="f-title" type="text" maxlength="300" placeholder="Стаття про школу"></div>'+
-      '<div class="fld"><label for="f-who">Виконавець</label><select id="f-who"></select></div>'+
+      '<div class="fld"><label>Виконавці (можна кілька)</label><div class="chips" id="f-who"></div></div>'+
       '<div class="fld" id="f-when"></div>'+
-      '<p class="hint">Виконавець отримає сповіщення в боті й зможе взяти задачу в роботу.</p><p class="err" id="f-err" hidden></p>'+
+      '<p class="hint">Кожен обраний отримає свою задачу й сповіщення в боті.</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-sub="task">Поставити задачу</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
     taskFields();
     $('#f-proj').addEventListener('change',taskFields);
   }
   function openAdd(kind){
     loadForm().then(function(){
-      if(kind==='event'){ if(!FORM.event_projects.length){toast('Немає проєктів, у які ви можете додавати події.');return} eventForm(); }
+      if(kind==='meeting'){ if(!(FORM.people||[]).length){toast('У таблиці команди немає інших людей з Telegram ID.');return} meetingForm(); }
+      else if(kind==='event'){ if(!FORM.event_projects.length){toast('Немає проєктів, у які ви можете додавати події.');return} eventForm(); }
       else { if(!FORM.task_projects.length){toast('Немає проєктів, де ви редактор.');return} taskForm(); }
     }).catch(function(){toast('Не вдалося відкрити форму. Спробуйте ще раз.')});
   }
@@ -346,15 +363,23 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function submit(kind){
     var title=$('#f-title').value.trim(), body, url;
     if(!title){ferr('Напишіть назву.');return}
-    if(kind==='event'){
+    if(kind==='meeting'){
+      var pp=pickedIds('pp'), all=!!document.querySelector('#f-pp [data-all][aria-pressed="true"]');
+      if(!all&&!pp.length){ferr('Оберіть, з ким зустріч.');return}
+      body={title:title,date:$('#f-date').value,time:$('#f-time').value,participant_ids:pp,all:all};
+      if(!body.date||!body.time){ferr('Вкажіть дату й час.');return}
+      url='/api/meeting';
+    }else if(kind==='event'){
       body={project:$('#f-proj').value,title:title,date:$('#f-date').value,time:$('#f-time').value,place:$('#f-place').value.trim()};
       if(!body.date||!body.time){ferr('Вкажіть дату й час.');return}
       url='/api/event';
     }else{
       var p=taskProj();
-      body={project:p.name,title:title,assignee_id:+$('#f-who').value};
+      var who=pickedIds('who');
+      if(!who.length){ferr('Оберіть хоча б одного виконавця.');return}
+      body={project:p.name,title:title,assignee_ids:who};
       if(p.is_event){body.event_id=$('#f-ev').value; if(!body.event_id){ferr('Спочатку додайте захід у календар.');return}}
-      else{body.deadline=$('#f-dl').value; if(!body.deadline){ferr('Вкажіть дедлайн.');return}}
+      else{body.deadline=$('#f-dl').value; if(!body.deadline){ferr('Вкажіть дедлайн.');return} if($('#f-due').value) body.due_time=$('#f-due').value;}
       url='/api/task';
     }
     ferr('');$('#f-ok').disabled=true;
@@ -392,7 +417,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     $('#team').innerHTML=D.team.map(function(m){
       var open=st.open===String(m.id), ev=m.events||[], n=m.tasks.length, ne=ev.length;
       var evh=ne?'<p class="hint" style="padding-top:12px"><b>Зайнятий(а) на подіях</b></p>'+ev.map(function(e){return '<div class="pt"><div><b>'+esc(e.title)+'</b><span class="tag">'+esc(e.project)+'</span><p>'+fmtShort(e.date)+', '+esc(e.time)+(e.place?' · '+esc(e.place):'')+'</p></div></div>'}).join(''):'';
-      var body=open?'<div class="pbody">'+(n?m.tasks.map(function(t){return '<div class="pt"><div><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>до '+fmtShort(t.deadline)+'</p></div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join(''):'<p class="hint" style="padding-top:10px">Відкритих задач немає.</p>')+evh+'</div>':'';
+      var body=open?'<div class="pbody">'+(n?m.tasks.map(function(t){return '<div class="pt"><div><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>до '+fmtDue(t.deadline,t.due)+'</p></div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join(''):'<p class="hint" style="padding-top:10px">Відкритих задач немає.</p>')+evh+'</div>':'';
       return '<div class="pcard"><button class="phead" data-tm="'+m.id+'" aria-expanded="'+open+'"><span class="av" data-av="'+m.id+'" data-nm="'+esc(m.name)+'">'+esc(initials(m.name))+'</span><span class="pinfo"><b>'+esc(m.name)+'</b><span>'+esc(m.position||'')+'</span></span><span class="cnt'+(n?' has':'')+'" title="Задачі">'+n+' з</span><span class="cnt'+(ne?' has':'')+'" title="Події">'+ne+' п</span></button>'+body+'</div>';
     }).join('');
     $$('#team .av').forEach(function(el){loadPhoto(el.dataset.av,el,el.dataset.nm)});
@@ -413,16 +438,23 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     else if(b.dataset.act){act(b.dataset.act,b.dataset.id);}
     else if(b.dataset.tm){st.open=st.open===b.dataset.tm?'':b.dataset.tm;team();}
     else if(b.dataset.add){openAdd(b.dataset.add);}
+    else if(b.dataset.all){var k=b.dataset.all,on=b.getAttribute('aria-pressed')!=='true';
+      document.querySelectorAll('#f-'+k+' .chip').forEach(function(c){c.setAttribute('aria-pressed',on)});}
+    else if(b.dataset.who||b.dataset.pp){var k2=b.dataset.who?'who':'pp',on2=b.getAttribute('aria-pressed')!=='true';
+      b.setAttribute('aria-pressed',on2);
+      var all=document.querySelector('#f-'+k2+' [data-all]');
+      if(all){var rest=document.querySelectorAll('#f-'+k2+' .chip:not([data-all])');
+        all.setAttribute('aria-pressed',Array.prototype.every.call(rest,function(c){return c.getAttribute('aria-pressed')==='true'}))}}
     else if(b.dataset.sub){if(b.dataset.sub==='cancel')closeSheet();else submit(b.dataset.sub);}
   });
 
   $('#sheet').addEventListener('click',function(e){if(e.target===$('#sheet'))closeSheet()});
   document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet()});
   function boot(){
-    if(!LIVE){demo();$('#add-ev').hidden=false;$('#add-tk').hidden=false;stats();cal();tasks();team();return}
+    if(!LIVE){demo();$('#add-ev').hidden=false;$('#add-mt').hidden=false;$('#add-tk').hidden=false;stats();cal();tasks();team();return}
     say('cal','Завантажую…');
     api('/api/me').then(function(me){
-      D.me=me;$('#add-ev').hidden=!me.can_event;$('#add-tk').hidden=!me.can_task;
+      D.me=me;$('#add-ev').hidden=!me.can_event;$('#add-mt').hidden=!me.can_meeting;$('#add-tk').hidden=!me.can_task;
       if(!me.stats){$('#tab-stats').hidden=true;show('cal')}
       var jobs=[api('/api/events').then(function(r){D.events=r.events;cal()}),
                 api('/api/tasks').then(function(r){D.tasks=r.tasks;tasks()})];
