@@ -323,7 +323,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       }).catch(function(){st.busy='';tasks();toast('Не вдалося зберегти. Спробуйте ще раз.')});
   }
   var FORM=null;
-  function demoForm(){return {people:[{id:1,name:'Богдан Макаренко'},{id:2,name:'Марія Карпенко'},{id:3,name:'Ольга Присяжна'},{id:4,name:'Анастасія Авдєєнко'}],event_projects:['Заходи','Стаття'],task_projects:[
+  function demoForm(){return {people:[{id:1,name:'Богдан Макаренко'},{id:2,name:'Марія Карпенко'},{id:3,name:'Ольга Присяжна'},{id:4,name:'Анастасія Авдєєнко'}],event_projects:['Заходи','Реклама'],task_projects:[
     {name:'Заходи',is_event:true,members:[{id:1,name:'Богдан Макаренко'},{id:2,name:'Анастасія Авдєєнко'}],events:[{id:'e1',title:'Репетиція виступу',date:D.events[2]?D.events[2].date:'',time:'18:00'}]},
     {name:'Стаття',is_event:false,members:[{id:3,name:'Марія Карпенко'},{id:4,name:'Ольга Присяжна'}]}]}}
   function loadForm(){
@@ -334,6 +334,9 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function opt(v,t,sel){return '<option value="'+esc(v)+'"'+(sel?' selected':'')+'>'+esc(t)+'</option>'}
   function closeSheet(){$('#sheet').hidden=true;$('#box').innerHTML=''}
   function openSheet(html){$('#box').innerHTML=html;$('#sheet').hidden=false}
+  var AD_PLACES=['Сайт','Facebook','Facebook Stories','Instagram','Instagram Stories','Threads','Telegram','TikTok'];
+  function isAd(n){return /реклам/i.test(n||'')}
+  function adToggle(){var on=isAd($('#f-proj').value);$('#f-adbox').hidden=!on;$('#f-place-l').textContent=on?'Інше місце (необовʼязково)':'Місце (необовʼязково)'}
   function eventForm(){
     var ps=FORM.event_projects;
     openSheet('<h3>Нова подія</h3>'+
@@ -341,9 +344,11 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<div class="fld"><label for="f-title">Що заплановано</label><input id="f-title" type="text" maxlength="200" placeholder="Зйомка зі спікеркою"></div>'+
       '<div class="two"><div class="fld"><label for="f-date">Дата</label><input id="f-date" type="date" min="'+today()+'" value="'+today()+'"></div>'+
       '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="12:00"></div></div>'+
-      '<div class="fld"><label for="f-place">Місце (необовʼязково)</label><input id="f-place" type="text" maxlength="200"></div>'+
+      '<div class="fld" id="f-adbox" hidden><label>Де вийде реклама (можна кілька)</label><div class="chips" id="f-ap">'+AD_PLACES.map(function(x){return '<button type="button" class="chip" data-ap="'+esc(x)+'" aria-pressed="false">'+esc(x)+'</button>'}).join('')+'</div></div>'+
+      '<div class="fld"><label for="f-place" id="f-place-l">Місце (необовʼязково)</label><input id="f-place" type="text" maxlength="200"></div>'+
       '<p class="hint">Подію буде додано в календар, колеги з проєкту отримають сповіщення.</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-sub="event">Додати в календар</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
+    $('#f-proj').addEventListener('change',adToggle);adToggle();
   }
   function whoChips(list,key){
     return '<button type="button" class="chip" data-all="'+key+'" aria-pressed="false">Усі</button>'+list.map(function(m){return '<button type="button" class="chip" data-'+key+'="'+m.id+'" aria-pressed="false">'+esc(m.name)+'</button>'}).join('');
@@ -401,6 +406,9 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       url='/api/meeting';
     }else if(kind==='event'){
       body={project:$('#f-proj').value,title:title,date:$('#f-date').value,time:$('#f-time').value,place:$('#f-place').value.trim()};
+      if(isAd(body.project)){var ap=Array.prototype.map.call(document.querySelectorAll('#f-ap [data-ap][aria-pressed="true"]'),function(x){return x.dataset.ap});
+        if(!ap.length&&!body.place){ferr('Оберіть, де вийде реклама.');return}
+        body.place=ap.concat(body.place?[body.place]:[]).join(', ')}
       if(!body.date||!body.time){ferr('Вкажіть дату й час.');return}
       url='/api/event';
     }else{
@@ -470,6 +478,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     else if(b.dataset.act){act(b.dataset.act,b.dataset.id);}
     else if(b.dataset.tm){st.open=st.open===b.dataset.tm?'':b.dataset.tm;team();}
     else if(b.dataset.add){openAdd(b.dataset.add);}
+    else if(b.dataset.ap!==undefined){b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');}
     else if(b.dataset.all){var k=b.dataset.all,on=b.getAttribute('aria-pressed')!=='true';
       document.querySelectorAll('#f-'+k+' .chip').forEach(function(c){c.setAttribute('aria-pressed',on)});}
     else if(b.dataset.who||b.dataset.pp){var k2=b.dataset.who?'who':'pp',on2=b.getAttribute('aria-pressed')!=='true';
