@@ -60,7 +60,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
 .mg button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .mg .dots{display:flex;gap:2px;height:6px}
 .mg .dots i{width:5px;height:5px;border-radius:50%;background:var(--accent);display:block}
-.mg button[aria-pressed="true"] .dots i{background:var(--bg)}
+.mg button[aria-pressed="true"] .dots i{box-shadow:0 0 0 1px var(--bg)}
 .ev{display:flex;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
 .ev time{font-family:var(--mono);font-size:13px;color:var(--accent);min-width:46px;padding-top:1px}
 .ev div{min-width:0}
@@ -265,12 +265,14 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function fmtDue(iso,due){return fmtShort(iso)+(due?', '+due:'')}
   var MNAME=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
   function pad2(n){return ('0'+n).slice(-2)}
-  function evHtml(e){return '<div class="ev"><time>'+esc(e.time)+'</time><div><b>'+esc(e.title)+'</b><span class="tag">'+esc(e.project)+'</span>'+(e.place?'<p>'+(/^https?:\/\//.test(e.place)?'<a href="'+esc(e.place)+'" target="_blank" rel="noopener">Відкрити Meet</a>':esc(e.place))+'</p>':'')+'</div></div>'}
+  var PCOL={'Подкаст':'#7C4DFF','Дезінфо':'#D32F2F','Стаття':'#1E88E5','Заходи':'#2E9E5B','Реклама':'#F59E0B','Зустрічі':'#00A3A3','Усі':'#8A6F6B'},PPAL=['#E91E8C','#6D4C41','#3949AB','#00897B','#C0CA33','#FB8C00'];
+  function pcol(n){if(PCOL[n])return PCOL[n];var h=0;for(var i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))>>>0;return PCOL[n]=PPAL[h%PPAL.length]}
+  function evHtml(e){return '<div class="ev"><time>'+esc(e.time)+'</time><div><b>'+esc(e.title)+'</b><span class="tag" style="background:'+pcol(e.project)+'22;color:'+pcol(e.project)+'">'+esc(e.project)+'</span>'+(e.place?'<p>'+(/^https?:\/\//.test(e.place)?'<a href="'+esc(e.place)+'" target="_blank" rel="noopener">Відкрити Meet</a>':esc(e.place))+'</p>':'')+'</div></div>'}
   function cal(){
     var now=new Date(); if(!st.cm) st.cm={y:now.getFullYear(),m:now.getMonth()};
     var PR=['Усі'];D.events.forEach(function(e){if(e.project&&PR.indexOf(e.project)<0)PR.push(e.project)});
     if(PR.indexOf(st.cproj)<0) st.cproj='Усі';
-    $('#cproj').innerHTML=PR.length>2?PR.map(function(p){return '<button class="chip" data-cp="'+esc(p)+'" aria-pressed="'+(p===st.cproj)+'">'+esc(p)+'</button>'}).join(''):'';
+    $('#cproj').innerHTML=PR.length>2?PR.map(function(p){return '<button class="chip" data-cp="'+esc(p)+'" aria-pressed="'+(p===st.cproj)+'"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:'+pcol(p)+'"></i>'+esc(p)+'</button>'}).join(''):'';
     var evs=D.events.filter(function(e){return st.cproj==='Усі'||e.project===st.cproj});
     var y=st.cm.y,m=st.cm.m,pre=y+'-'+pad2(m+1)+'-';
     var by={};evs.forEach(function(e){(by[e.date]=by[e.date]||[]).push(e)});
@@ -279,8 +281,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'].forEach(function(w){h+='<div class="wd">'+w+'</div>'});
     for(var i=0;i<lead;i++) h+='<div></div>';
     for(var d=1;d<=dim;d++){
-      var iso=pre+pad2(d),n=(by[iso]||[]).length;
-      h+='<button data-cd="'+iso+'" aria-pressed="'+(st.csel===iso)+'" class="'+(iso===todayIso?'today':'')+'">'+d+'<span class="dots">'+(n?'<i></i>':'')+(n>1?'<i></i>':'')+(n>2?'<i></i>':'')+'</span></button>';
+      var iso=pre+pad2(d),dp=[];(by[iso]||[]).forEach(function(e){if(dp.indexOf(e.project)<0)dp.push(e.project)});
+      h+='<button data-cd="'+iso+'" aria-pressed="'+(st.csel===iso)+'" class="'+(iso===todayIso?'today':'')+'">'+d+'<span class="dots">'+dp.slice(0,4).map(function(p){return '<i style="background:'+pcol(p)+'"></i>'}).join('')+'</span></button>';
     }
     h+='</div>';
     var list=Object.keys(by).filter(function(k){return k.indexOf(pre)===0&&(!st.csel||k===st.csel)}).sort();
