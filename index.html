@@ -115,7 +115,13 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
 .ck-item[aria-checked="true"]{opacity:.65}
 .ck-item[aria-checked="true"] span:last-child{text-decoration:line-through}
 .ck-box{flex:0 0 22px;height:22px;border:2px solid var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--accent)}
-  .hm-date{font-size:13px;opacity:.7;margin:4px 0 12px}
+  .hm-date{font-size:13px;opacity:.7;margin:4px 0 4px}
+  .hm-hol{font-size:17px;font-weight:700;margin:0 0 6px}
+  .hm-wx{font-size:14px;opacity:.85;margin:0 0 12px}
+  .hm-cd{border:1px solid rgba(128,128,128,.25);border-radius:16px;padding:14px;margin-bottom:12px}
+  .hm-cd-l{font-size:12px;text-transform:uppercase;letter-spacing:.04em;opacity:.7}
+  .hm-cd-n{font-size:24px;font-weight:700;margin:4px 0}
+  .hm-sat{border-radius:14px;padding:12px;margin-bottom:12px;background:rgba(242,165,168,.18);font-size:14px;line-height:1.4}
   .hm-quote{display:flex;gap:14px;align-items:center;border:1px solid rgba(128,128,128,.25);border-radius:16px;padding:16px;margin-bottom:18px}
   .hm-av,.hm-ph{width:64px;height:64px;min-width:64px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;background:rgba(128,128,128,.18)}
   .hm-q{font-size:16px;line-height:1.45;font-style:italic}
@@ -677,7 +683,12 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     var d=new Date((h.date||'')+'T12:00:00'),box=$('#home-box');
     var dateTxt=isNaN(d)?'':WD[d.getDay()]+', '+d.getDate()+' '+MG[d.getMonth()]+' '+d.getFullYear();
     var html='<div class="hm-date">'+esc(dateTxt)+'</div>';
+    if(h.holidays&&h.holidays.length) html+='<div class="hm-hol">🎉 '+h.holidays.map(esc).join(' · ')+'</div>';
+    if(h.weather) html+='<div class="hm-wx">'+esc(h.weather.icon)+' '+esc(h.weather.city)+', '+h.weather.temp+'°C · '+esc(h.weather.text)+'</div>';
+    if(h.next_event){var ne=h.next_event,left=ne.days>0?ne.days+' дн. '+ne.hours+' год':(ne.hours>0?ne.hours+' год '+ne.minutes+' хв':ne.minutes+' хв');
+      html+='<div class="hm-cd"><div class="hm-cd-l">До найближчої події</div><div class="hm-cd-n">'+left+'</div><div class="hm-sub">'+esc(ne.title)+' · '+esc(ne.project)+' · '+esc(ne.date)+', '+esc(ne.time)+'</div></div>';}
     html+='<div class="hm-quote"><img class="hm-av" id="hm-av" alt="Бучарик" hidden><span class="hm-av hm-fb">Б</span><div><div class="hm-q">'+esc(h.quote)+'</div><div class="hm-by">— Бучарик</div></div></div>';
+    if(h.saturday) html+='<div class="hm-sat">📸 Сьогодні субота — «Суботні фотки»! Кидайте в чат свої кадри з тижня.</div>';
     html+='<h3 class="hm-h">Сьогодні заплановано</h3>';
     html+=(h.events&&h.events.length)?h.events.map(function(e){return '<div class="hm-card"><div class="hm-time">'+esc(e.time)+'</div><div><div class="hm-t">'+esc(e.title)+'</div><div class="hm-sub">'+esc(e.project)+(e.place?' · '+esc(e.place):'')+'</div></div></div>'}).join(''):'<p class="note">На сьогодні подій немає.</p>';
     if(h.birthdays&&h.birthdays.length){
