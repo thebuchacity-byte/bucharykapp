@@ -158,7 +158,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       </div>
     </section>
     <section id="v-home" aria-label="Головна"><div id="home-box"></div></section>
-    <section id="v-cal" aria-label="Календар" hidden><p class="note" id="msg-cal" hidden></p><div style="display:flex;flex-direction:column;gap:14px"><button class="btn pri addbtn" id="add-ev" data-add="event" hidden>＋ Нова подія</button><button class="btn pri addbtn" id="add-tk" data-add="task" hidden>＋ Нова задача</button><button class="btn addbtn" id="add-mt" data-add="meeting" hidden>🎥 Нова онлайн-зустріч</button><div class="chips" id="cproj"></div><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div></div></section>
+    <section id="v-cal" aria-label="Календар" hidden><p class="note" id="msg-cal" hidden></p><div style="display:flex;flex-direction:column;gap:14px"><button class="btn pri addbtn" id="add-ev" data-add="event" hidden>＋ Нова подія</button><button class="btn pri addbtn" id="add-tk" data-add="task" hidden>＋ Нова задача</button><button class="btn addbtn" id="add-mt" data-add="meeting" hidden>🎥 Нова онлайн-зустріч</button><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div><div class="chips" id="cproj"></div></div></section>
     <section id="v-team" aria-label="Команда" hidden><p class="note" id="msg-team" hidden></p><p class="hint" style="margin:0 2px 10px">з — відкриті задачі, п — найближчі події, де людина зайнята</p><div id="team" style="display:flex;flex-direction:column;gap:10px"></div></section>
     <section id="v-wk" aria-label="Проєкти" hidden><p class="note" id="msg-wk" hidden></p>
       <div style="display:flex;flex-direction:column;gap:14px">
@@ -683,11 +683,11 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function homeRender(h){
     var d=new Date((h.date||'')+'T12:00:00'),box=$('#home-box');
     var dateTxt=isNaN(d)?'':WD[d.getDay()]+', '+d.getDate()+' '+MG[d.getMonth()]+' '+d.getFullYear();
-    var html='<div class="hm-quote"><img class="hm-logo" src="logo.png" alt="Thebuchacity assistant"><div><div class="hm-q">'+esc(h.quote)+'</div><div class="hm-by">— Бучарик</div></div></div>';
-    html+='<button class="btn pri addbtn hm-work" data-wknew="1">＋ '+esc(h.work_label||'Що я зробив?')+'</button>';
-    html+='<div class="hm-date">'+esc(dateTxt)+'</div>';
+    var html='<div class="hm-date">'+esc(dateTxt)+'</div>';
+    html+='<div class="hm-quote"><div class="hm-q">'+esc(h.quote)+'</div><div class="hm-by">— Бучарик</div></div>';
     if(h.weather) html+='<div class="hm-wx">'+esc(h.weather.icon)+' '+esc(h.weather.city)+', '+h.weather.temp+'°C · '+esc(h.weather.text)+'</div>';
     if(h.holidays&&h.holidays.length) html+='<div class="hm-hol">🎉 '+h.holidays.map(esc).join(' · ')+'</div>';
+    html+='<button class="btn pri addbtn hm-work" data-wknew="1">＋ '+esc(h.work_label||'Що я зробив?')+'</button>';
     if(h.next_event){var ne=h.next_event,left=ne.days>0?ne.days+' дн. '+ne.hours+' год':(ne.hours>0?ne.hours+' год '+ne.minutes+' хв':ne.minutes+' хв');
       html+='<div class="hm-cd"><div class="hm-cd-l">До найближчої події</div><div class="hm-cd-n">'+left+'</div><div class="hm-sub">'+esc(ne.title)+' · '+esc(ne.project)+' · '+esc(ne.date)+', '+esc(ne.time)+'</div></div>';}
     if(h.saturday) html+='<div class="hm-sat">📸 Сьогодні субота — «Суботні фотки»! Кидайте в чат свої кадри з тижня.</div>';
