@@ -150,7 +150,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       </div>
     </section>
     <section id="v-home" aria-label="Головна"><div id="home-box"></div></section>
-    <section id="v-cal" aria-label="Календар" hidden><p class="note" id="msg-cal" hidden></p><div style="display:flex;flex-direction:column;gap:14px"><button class="btn pri addbtn" id="add-ev" data-add="event" hidden>＋ Нова подія</button><button class="btn addbtn" id="add-mt" data-add="meeting" hidden>🎥 Нова онлайн-зустріч</button><div class="chips" id="cproj"></div><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div></div></section>
+    <section id="v-cal" aria-label="Календар" hidden><p class="note" id="msg-cal" hidden></p><div style="display:flex;flex-direction:column;gap:14px"><button class="btn pri addbtn" id="add-ev" data-add="event" hidden>＋ Нова подія</button><button class="btn pri addbtn" id="add-tk" data-add="task" hidden>＋ Нова задача</button><button class="btn addbtn" id="add-mt" data-add="meeting" hidden>🎥 Нова онлайн-зустріч</button><div class="chips" id="cproj"></div><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div></div></section>
     <section id="v-team" aria-label="Команда" hidden><p class="note" id="msg-team" hidden></p><p class="hint" style="margin:0 2px 10px">з — відкриті задачі, п — найближчі події, де людина зайнята</p><div id="team" style="display:flex;flex-direction:column;gap:10px"></div></section>
     <section id="v-wk" aria-label="Проєкти" hidden><p class="note" id="msg-wk" hidden></p>
       <div style="display:flex;flex-direction:column;gap:14px">
@@ -165,20 +165,12 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         <div id="exp" style="display:flex;flex-direction:column;gap:10px"></div>
       </div>
     </section>
-    <section id="v-tasks" aria-label="Задачі" hidden><p class="note" id="msg-tasks" hidden></p>
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <button class="btn pri addbtn" id="add-tk" data-add="task" hidden>＋ Нова задача</button>
-        <div class="chips" id="proj"></div>
-        <div id="tasks" style="display:flex;flex-direction:column;gap:10px"></div>
-      </div>
-    </section>
   </main>
   <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true"><div class="box" id="box"></div></div>
   <div class="toast" id="toast" hidden role="status"></div>
   <nav><div class="in" role="tablist">
     <button role="tab" data-v="home" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10M10 20v-6h4v6"/></svg>Головна</button>
     <button role="tab" data-v="cal" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Календар</button>
-    <button role="tab" id="tab-tasks" data-v="tasks" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12M3 6l1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>Задачі</button>
     <button role="tab" data-v="team" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3.2 3.2 0 0 1 0 5.6M18 14.3c1.8.8 3 2.6 3 4.7"/></svg>Команда</button>
     <button role="tab" data-v="wk" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Проєкти</button>
     <button role="tab" data-v="exp" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/></svg>Витрати</button>
@@ -330,6 +322,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   }
   var SN={new:'Нова',work:'В роботі',reported:'Здана',done:'Готово'};
   function tasks(){
+    if(!$('#tasks')) return;
     var PR=['Усі'];D.tasks.forEach(function(t){if(PR.indexOf(t.project)<0)PR.push(t.project)});
     if(PR.indexOf(st.proj)<0) st.proj='Усі';
     if(!D.tasks.length){$('#proj').innerHTML='';$('#tasks').innerHTML='';say('tasks','Відкритих задач немає.');return}
@@ -699,7 +692,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function show(v){
     st.view=v;
     $$('nav button').forEach(function(x){x.setAttribute('aria-selected',x.dataset.v===v)});
-    ['home','stats','cal','tasks','team','exp','wk','ck'].forEach(function(n){$('#v-'+n).hidden=n!==v});
+    ['home','stats','cal','team','exp','wk','ck'].forEach(function(n){$('#v-'+n).hidden=n!==v});
     if(v==='ck') ckShow();
     window.scrollTo(0,0);
   }
@@ -754,10 +747,9 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     if(!LIVE){demo();homeRender(HOME_DEMO);$('#add-ev').hidden=false;$('#add-mt').hidden=false;$('#add-tk').hidden=false;D.wk={viewer:true,projects:['Стаття','Подкаст'],types:['Інтерв\'ю','Стаття','Репортаж','Вертикальне відео','Відео на YouTube'],items:[{id:'w1',date:'2026-10-11',uid:3,name:'Ольга Присяжна',project:'Стаття',type:'Репортаж',title:'Форум у Бучі'},{id:'w2',date:'2026-10-09',uid:3,name:'Ольга Присяжна',project:'Стаття',type:'Інтерв\'ю',title:''},{id:'w3',date:'2026-10-10',uid:2,name:'Марія Карпенко',project:'Стаття',type:'Відео на YouTube',title:'Як живе місто'}]};D.exp={owner:true,items:[{id:'x1',date:'2026-10-10 12:00',uid:2,name:'Марія Карпенко',title:'Оренда студії',amount:1500,paid:false},{id:'x2',date:'2026-10-09 15:00',uid:2,name:'Марія Карпенко',title:'Таксі на зйомку',amount:240,paid:true},{id:'x3',date:'2026-10-11 10:00',uid:1,name:'Богдан Макаренко',title:'Карта пам’яті',amount:890,paid:false}]};stats();cal();tasks();team();exps();works();return}
     say('cal','Завантажую…');
     api('/api/me').then(function(me){
-      D.me=me;if(!me.tasks){$('#tab-tasks').hidden=true}$('#add-ev').hidden=!me.can_event;$('#add-mt').hidden=!me.can_meeting;$('#add-tk').hidden=!me.can_task;
+      D.me=me;$('#add-ev').hidden=!me.can_event;$('#add-mt').hidden=!me.can_meeting;$('#add-tk').hidden=!me.can_task;
       if(!me.stats){$('#tab-stats').hidden=true}
       var jobs=[api('/api/events').then(function(r){D.events=r.events;cal()})];
-      if(me.tasks) jobs.push(api('/api/tasks').then(function(r){D.tasks=r.tasks;tasks()}));
       jobs.push(api('/api/works').then(function(r){D.wk=r;works()}));
       jobs.push(api('/api/home').then(function(r){homeRender(r)}));
       jobs.push(api('/api/expenses').then(function(r){D.exp=r;exps()}));
@@ -766,7 +758,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       return Promise.all(jobs);
     }).catch(function(e){
       var t=e&&e.code===403?'Цей застосунок лише для команди Thebuchacity. Попросіть додати ваш Telegram ID у таблицю.':'Не вдалося завантажити дані. Закрийте застосунок і відкрийте знову.';
-      ['stats','cal','tasks','team','exp','wk'].forEach(function(n){say(n,t)});
+      ['stats','cal','team','exp','wk'].forEach(function(n){say(n,t)});
     });
   }
   boot();
