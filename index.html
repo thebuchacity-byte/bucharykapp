@@ -4,16 +4,16 @@
 <style>
 /* Layout: мобільний застосунок на всю висоту; зверху назва, посередині вміст вкладки, знизу панель вкладок як у Telegram */
 :root{
-  --bg:#F5F3EF; --surface:#FFFFFF; --fg:#17202B; --muted:#5E6B79; --line:#E3DFD7;
-  --accent:#D9481F; --on-accent:#FFFFFF; --accent-soft:#FBE3DA; --good:#2E7D4F; --warn:#B7791F; --bad:#B3392B;
+  --bg:#000000; --surface:#0E0E0E; --fg:#FFFFFF; --muted:#A3A3A3; --line:#262626;
+  --accent:#FF8A00; --on-accent:#000000; --accent-soft:#2E1C05; --good:#2E7D4F; --warn:#B7791F; --bad:#B3392B;
   --font:'Rubik',system-ui,-apple-system,'Segoe UI',Arial,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#10161D; --surface:#1A232D; --fg:#EEF1F4; --muted:#93A0AE; --line:#2A3541;
-  --accent:#F2764A; --on-accent:#10161D; --accent-soft:#3A2219; --good:#5CBF86; --warn:#E3B04B; --bad:#EE7B6C; color-scheme:dark}}
+  --bg:#000000; --surface:#0E0E0E; --fg:#FFFFFF; --muted:#A3A3A3; --line:#262626;
+  --accent:#FF8A00; --on-accent:#000000; --accent-soft:#2E1C05; --good:#5CBF86; --warn:#E3B04B; --bad:#EE7B6C; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#10161D; --surface:#1A232D; --fg:#EEF1F4; --muted:#93A0AE; --line:#2A3541;
-  --accent:#F2764A; --on-accent:#10161D; --accent-soft:#3A2219; --good:#5CBF86; --warn:#E3B04B; --bad:#EE7B6C; color-scheme:dark}
+  --bg:#000000; --surface:#0E0E0E; --fg:#FFFFFF; --muted:#A3A3A3; --line:#262626;
+  --accent:#FF8A00; --on-accent:#000000; --accent-soft:#2E1C05; --good:#5CBF86; --warn:#E3B04B; --bad:#EE7B6C; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.4}
@@ -31,7 +31,7 @@ nav button[aria-selected="true"]{color:var(--accent)}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:500 13px var(--font);padding:7px 13px;border-radius:999px;cursor:pointer}
-.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .seg{display:flex;background:var(--line);border-radius:8px;padding:3px}
 .seg button{flex:1;border:0;background:none;color:var(--muted);font:500 13px var(--font);padding:7px;border-radius:6px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg)}
@@ -57,7 +57,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
 .mg button{position:relative;aspect-ratio:1/1;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;font:500 14px var(--font);cursor:pointer;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .mg button.out{opacity:.35}
 .mg button.today{border-color:var(--accent)}
-.mg button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .mg .dots{display:flex;gap:2px;height:6px}
 .mg .dots i{width:5px;height:5px;border-radius:50%;background:var(--accent);display:block}
 .mg button[aria-pressed="true"] .dots i{box-shadow:0 0 0 1px var(--bg)}
@@ -72,8 +72,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
 .st.new{color:var(--muted)} .st.work{color:var(--warn)} .st.done{color:var(--good)}
 .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
 .acts span{font-size:13px;color:var(--muted)}
-.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);font:500 13px var(--font);padding:8px 14px;border-radius:8px;cursor:pointer}
-.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn{border:1px solid var(--accent);background:var(--surface);color:var(--accent);font:500 13px var(--font);padding:8px 14px;border-radius:8px;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
 .btn:disabled{opacity:.5;cursor:default}
 .addbtn{width:100%}
 .pcard{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
@@ -115,15 +115,15 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
 .ck-item[aria-checked="true"]{opacity:.65}
 .ck-item[aria-checked="true"] span:last-child{text-decoration:line-through}
 .ck-box{flex:0 0 22px;height:22px;border:2px solid var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--accent)}
-  .hm-date{font-size:13px;opacity:.7;margin:4px 0 4px}
-  .hm-hol{font-size:17px;font-weight:700;margin:0 0 6px}
-  .hm-wx{font-size:14px;opacity:.85;margin:0 0 12px}
-  .hm-cd{border:1px solid rgba(128,128,128,.25);border-radius:16px;padding:14px;margin-bottom:12px}
+  .hm-date{font-size:24px;font-weight:700;margin:4px 0 6px}
+  .hm-hol{font-size:16px;font-weight:700;color:var(--accent);margin:0 0 6px}
+  .hm-wx{font-size:20px;font-weight:600;margin:0 0 14px}
+  .hm-cd{border:1px solid var(--accent);border-radius:16px;padding:14px;margin-bottom:12px;background:var(--surface)}
   .hm-cd-l{font-size:12px;text-transform:uppercase;letter-spacing:.04em;opacity:.7}
-  .hm-cd-n{font-size:24px;font-weight:700;margin:4px 0}
-  .hm-sat{border-radius:14px;padding:12px;margin-bottom:12px;background:rgba(242,165,168,.18);font-size:14px;line-height:1.4}
-  .hm-quote{display:flex;gap:14px;align-items:center;border:1px solid rgba(128,128,128,.25);border-radius:16px;padding:16px;margin-bottom:18px}
-  .hm-av,.hm-ph{width:64px;height:64px;min-width:64px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;background:rgba(128,128,128,.18)}
+  .hm-cd-n{font-size:26px;font-weight:700;color:var(--accent);margin:4px 0}
+  .hm-sat{border-radius:14px;padding:12px;margin-bottom:12px;background:var(--accent-soft);color:var(--accent);font-size:14px;line-height:1.4}
+  .hm-quote{display:flex;gap:14px;align-items:center;border:2px solid var(--accent);border-radius:16px;padding:16px;margin-bottom:18px;background:var(--surface)}
+  .hm-av,.hm-ph{width:72px;height:72px;min-width:72px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;background:var(--line)}
   .hm-q{font-size:16px;line-height:1.45;font-style:italic}
   .hm-by{font-size:12px;opacity:.7;margin-top:6px}
   .hm-h{font-size:14px;text-transform:uppercase;letter-spacing:.04em;opacity:.7;margin:18px 0 8px}
@@ -682,12 +682,12 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function homeRender(h){
     var d=new Date((h.date||'')+'T12:00:00'),box=$('#home-box');
     var dateTxt=isNaN(d)?'':WD[d.getDay()]+', '+d.getDate()+' '+MG[d.getMonth()]+' '+d.getFullYear();
-    var html='<div class="hm-date">'+esc(dateTxt)+'</div>';
-    if(h.holidays&&h.holidays.length) html+='<div class="hm-hol">🎉 '+h.holidays.map(esc).join(' · ')+'</div>';
+    var html='<div class="hm-quote"><img class="hm-av" src="logo.png" alt="Thebuchacity assistant"><div><div class="hm-q">'+esc(h.quote)+'</div><div class="hm-by">— Бучарик</div></div></div>';
+    html+='<div class="hm-date">'+esc(dateTxt)+'</div>';
     if(h.weather) html+='<div class="hm-wx">'+esc(h.weather.icon)+' '+esc(h.weather.city)+', '+h.weather.temp+'°C · '+esc(h.weather.text)+'</div>';
+    if(h.holidays&&h.holidays.length) html+='<div class="hm-hol">🎉 '+h.holidays.map(esc).join(' · ')+'</div>';
     if(h.next_event){var ne=h.next_event,left=ne.days>0?ne.days+' дн. '+ne.hours+' год':(ne.hours>0?ne.hours+' год '+ne.minutes+' хв':ne.minutes+' хв');
       html+='<div class="hm-cd"><div class="hm-cd-l">До найближчої події</div><div class="hm-cd-n">'+left+'</div><div class="hm-sub">'+esc(ne.title)+' · '+esc(ne.project)+' · '+esc(ne.date)+', '+esc(ne.time)+'</div></div>';}
-    html+='<div class="hm-quote"><img class="hm-av" id="hm-av" alt="Бучарик" hidden><span class="hm-av hm-fb">Б</span><div><div class="hm-q">'+esc(h.quote)+'</div><div class="hm-by">— Бучарик</div></div></div>';
     if(h.saturday) html+='<div class="hm-sat">📸 Сьогодні субота — «Суботні фотки»! Кидайте в чат свої кадри з тижня.</div>';
     html+='<h3 class="hm-h">Сьогодні заплановано</h3>';
     html+=(h.events&&h.events.length)?h.events.map(function(e){return '<div class="hm-card"><div class="hm-time">'+esc(e.time)+'</div><div><div class="hm-t">'+esc(e.title)+'</div><div class="hm-sub">'+esc(e.project)+(e.place?' · '+esc(e.place):'')+'</div></div></div>'}).join(''):'<p class="note">На сьогодні подій немає.</p>';
@@ -696,7 +696,6 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       html+=h.birthdays.map(function(b,i){return '<div class="hm-bd"><img class="hm-ph" id="hm-bd'+i+'" alt="" hidden><span class="hm-ph hm-fb">🎂</span><div><div class="hm-t">'+esc(b.name)+'</div><div class="hm-sub">'+esc(b.greeting)+'</div></div></div>'}).join('');
     }
     box.innerHTML=html;
-    imgInto($('#hm-av'),API_BASE+'/api/home/avatar');
     if(h.birthdays) h.birthdays.forEach(function(b,i){imgInto($('#hm-bd'+i),API_BASE+'/api/photo/'+b.uid)});
   }
 
