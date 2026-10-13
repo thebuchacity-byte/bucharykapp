@@ -339,7 +339,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       }).catch(function(){st.busy='';tasks();toast('Не вдалося зберегти. Спробуйте ще раз.')});
   }
   var FORM=null;
-  function demoForm(){return {people:[{id:1,name:'Богдан Макаренко'},{id:2,name:'Марія Карпенко'},{id:3,name:'Ольга Присяжна'},{id:4,name:'Анастасія Авдєєнко'}],event_projects:['Заходи','Реклама'],task_projects:[
+  function demoForm(){return {people:[{id:1,name:'Богдан Макаренко'},{id:2,name:'Марія Карпенко'},{id:3,name:'Ольга Присяжна'},{id:4,name:'Анастасія Авдєєнко'}],event_projects:['Заходи','Реклама','Стаття'],event_assignees:{'Стаття':[{id:3,name:'Ольга Присяжна'},{id:2,name:'Марія Карпенко'}]},task_projects:[
     {name:'Заходи',is_event:true,members:[{id:1,name:'Богдан Макаренко'},{id:2,name:'Анастасія Авдєєнко'}],events:[{id:'e1',title:'Репетиція виступу',date:D.events[2]?D.events[2].date:'',time:'18:00'}]},
     {name:'Стаття',is_event:false,members:[{id:3,name:'Марія Карпенко'},{id:4,name:'Ольга Присяжна'}]}]}}
   function loadForm(){
@@ -380,14 +380,23 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     openSheet('<h3>Нова подія</h3>'+
       '<div class="fld"><label for="f-proj">Проєкт</label><select id="f-proj">'+ps.map(function(p){return opt(p,p)}).join('')+'</select></div>'+
       '<div class="fld"><label for="f-title">Що заплановано</label><input id="f-title" type="text" maxlength="200" placeholder="Зйомка зі спікеркою"></div>'+
+      '<div class="fld" id="f-asgbox" hidden><label for="f-asg">Хто відповідає за матеріал</label><select id="f-asg"></select></div>'+
       '<div class="two"><div class="fld"><label for="f-date">Дата</label><input id="f-date" type="date" min="'+today()+'" value="'+today()+'"></div>'+
       '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="12:00"></div></div>'+
       '<div class="fld" id="f-adbox" hidden><label>Де вийде реклама (можна кілька)</label><div class="chips" id="f-ap">'+AD_PLACES.map(function(x){return '<button type="button" class="chip" data-ap="'+esc(x)+'" aria-pressed="false">'+esc(x)+'</button>'}).join('')+'</div></div>'+
       '<div class="fld"><label for="f-place" id="f-place-l">Місце (необовʼязково)</label><input id="f-place" type="text" maxlength="200"></div>'+
-      '<p class="hint">Подію буде додано в календар, колеги з проєкту отримають сповіщення.</p><p class="err" id="f-err" hidden></p>'+
+      '<div class="fld" id="f-ntbox"><label>Кого сповістити</label><div class="chips" id="f-pp">'+whoChips(FORM.people.filter(function(m){return !/\(я\)$/.test(m.name)}),'pp')+'</div></div>'+
+      '<p class="hint">Подію буде додано в календар. Сповіщення отримають лише обрані люди.</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-sub="event">Додати в календар</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
-    $('#f-proj').addEventListener('change',adToggle);adToggle();
+    $('#f-proj').addEventListener('change',function(){adToggle();asgToggle();ntSet()});adToggle();asgToggle();ntSet();
   }
+  function ntSet(){var box=$('#f-ntbox');if(!box)return;var pr=$('#f-proj').value;
+    var d=(FORM.event_defaults||{})[pr]||[];
+    document.querySelectorAll('#f-pp .chip').forEach(function(c){c.setAttribute('aria-pressed',c.dataset.all?false:d.indexOf(+c.dataset.pp)>=0)});
+    var all=document.querySelector('#f-pp [data-all]'),rest=document.querySelectorAll('#f-pp .chip:not([data-all])');
+    if(all)all.setAttribute('aria-pressed',rest.length>0&&Array.prototype.every.call(rest,function(c){return c.getAttribute('aria-pressed')==='true'}))}
+  function asgToggle(){var l=(FORM.event_assignees||{})[$('#f-proj').value],b=$('#f-asgbox');if(!b)return;b.hidden=!l;
+    if(l)$('#f-asg').innerHTML=opt('','Оберіть людину')+l.map(function(m){return opt(m.id,m.name)}).join('')}
   function whoChips(list,key){
     return '<button type="button" class="chip" data-all="'+key+'" aria-pressed="false">Усі</button>'+list.map(function(m){return '<button type="button" class="chip" data-'+key+'="'+m.id+'" aria-pressed="false">'+esc(m.name)+'</button>'}).join('');
   }
@@ -448,6 +457,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         if(!ap.length&&!body.place){ferr('Оберіть, де вийде реклама.');return}
         body.place=ap.concat(body.place?[body.place]:[]).join(', ')}
       if(!body.date||!body.time){ferr('Вкажіть дату й час.');return}
+      if((FORM.event_assignees||{})[body.project]){body.assignee_id=$('#f-asg').value;if(!body.assignee_id){ferr('Оберіть, хто відповідає за матеріал.');return}}
+      body.notify_ids=pickedIds('pp');
       url='/api/event';
     }else{
       var p=taskProj();
