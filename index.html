@@ -118,6 +118,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   .hm-date{font-size:24px;font-weight:700;margin:4px 0 6px}
   .hm-hol{font-size:16px;font-weight:700;color:var(--accent);margin:0 0 6px}
   .hm-wx{font-size:20px;font-weight:600;margin:0 0 14px}
+  .hm-logo{width:88px;height:88px;min-width:88px;object-fit:contain;border-radius:12px;background:#000;display:block}
   .hm-cd{border:1px solid var(--accent);border-radius:16px;padding:14px;margin-bottom:12px;background:var(--surface)}
   .hm-cd-l{font-size:12px;text-transform:uppercase;letter-spacing:.04em;opacity:.7}
   .hm-cd-n{font-size:26px;font-weight:700;color:var(--accent);margin:4px 0}
@@ -682,7 +683,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function homeRender(h){
     var d=new Date((h.date||'')+'T12:00:00'),box=$('#home-box');
     var dateTxt=isNaN(d)?'':WD[d.getDay()]+', '+d.getDate()+' '+MG[d.getMonth()]+' '+d.getFullYear();
-    var html='<div class="hm-quote"><img class="hm-av" src="logo.png" alt="Thebuchacity assistant"><div><div class="hm-q">'+esc(h.quote)+'</div><div class="hm-by">— Бучарик</div></div></div>';
+    var html='<div class="hm-quote"><img class="hm-logo" src="logo.png" alt="Thebuchacity assistant"><div><div class="hm-q">'+esc(h.quote)+'</div><div class="hm-by">— Бучарик</div></div></div>';
     html+='<div class="hm-date">'+esc(dateTxt)+'</div>';
     if(h.weather) html+='<div class="hm-wx">'+esc(h.weather.icon)+' '+esc(h.weather.city)+', '+h.weather.temp+'°C · '+esc(h.weather.text)+'</div>';
     if(h.holidays&&h.holidays.length) html+='<div class="hm-hol">🎉 '+h.holidays.map(esc).join(' · ')+'</div>';
