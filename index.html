@@ -765,7 +765,10 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       if(!me.stats){$('#tab-stats').hidden=true}
       var jobs=[api('/api/events').then(function(r){D.events=r.events;cal()})];
       jobs.push(api('/api/works').then(function(r){D.wk=r;works();if(!r.viewer){$('#tab-wk').hidden=true}}));
-      jobs.push(api('/api/home').then(function(r){homeRender(r)}));
+      $('#home-box').innerHTML='<p class="note">Завантажую головну…</p>';
+      api('/api/home').then(function(r){homeRender(r)}).catch(function(){
+        $('#home-box').innerHTML='<p class="note">Головна не завантажилась. Закрийте застосунок і відкрийте знову.</p>';
+      });
       jobs.push(api('/api/expenses').then(function(r){D.exp=r;exps()}));
       jobs.push(api('/api/team').then(function(r){D.team=r.members;team()}));
       if(me.stats) jobs.push(api('/api/stats?months=12').then(function(r){D.labels=r.labels;D.nets=r.nets;stats()}));
