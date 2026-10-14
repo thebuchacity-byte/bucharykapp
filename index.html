@@ -684,8 +684,12 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     var d=new Date((h.date||'')+'T12:00:00'),box=$('#home-box');
     var dateTxt=isNaN(d)?'':WD[d.getDay()]+', '+d.getDate()+' '+MG[d.getMonth()]+' '+d.getFullYear();
     var html='<div class="hm-date">'+esc(dateTxt)+'</div>';
-    html+='<div class="hm-quote"><div class="hm-q">'+esc(h.quote)+'</div><div class="hm-by">— Бучарик</div></div>';
+    html+='<div class="hm-quote"><div class="hm-q">'+esc(h.quote)+'</div></div>';
     if(h.weather) html+='<div class="hm-wx">'+esc(h.weather.icon)+' '+esc(h.weather.city)+', '+h.weather.temp+'°C · '+esc(h.weather.text)+'</div>';
+    if(h.birthdays&&h.birthdays.length){
+      html+='<h3 class="hm-h">День народження</h3>';
+      html+=h.birthdays.map(function(b,i){return '<div class="hm-bd"><img class="hm-ph" id="hm-bd'+i+'" alt="" hidden><span class="hm-ph hm-fb">🎂</span><div><div class="hm-t">'+esc(b.name)+'</div><div class="hm-sub">'+esc(b.greeting)+'</div></div></div>'}).join('');
+    }
     if(h.holidays&&h.holidays.length) html+='<div class="hm-hol">🎉 '+h.holidays.map(esc).join(' · ')+'</div>';
     html+='<button class="btn pri addbtn hm-work" data-wknew="1">＋ '+esc(h.work_label||'Що я зробив?')+'</button>';
     if(h.next_event){var ne=h.next_event,left=ne.days>0?ne.days+' дн. '+ne.hours+' год':(ne.hours>0?ne.hours+' год '+ne.minutes+' хв':ne.minutes+' хв');
@@ -693,10 +697,6 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     if(h.saturday) html+='<div class="hm-sat">📸 Сьогодні субота — «Суботні фотки»! Кидайте в чат свої кадри з тижня.</div>';
     html+='<h3 class="hm-h">Сьогодні заплановано</h3>';
     html+=(h.events&&h.events.length)?h.events.map(function(e){return '<div class="hm-card"><div class="hm-time">'+esc(e.time)+'</div><div><div class="hm-t">'+esc(e.title)+'</div><div class="hm-sub">'+esc(e.project)+(e.place?' · '+esc(e.place):'')+'</div></div></div>'}).join(''):'<p class="note">На сьогодні подій немає.</p>';
-    if(h.birthdays&&h.birthdays.length){
-      html+='<h3 class="hm-h">День народження</h3>';
-      html+=h.birthdays.map(function(b,i){return '<div class="hm-bd"><img class="hm-ph" id="hm-bd'+i+'" alt="" hidden><span class="hm-ph hm-fb">🎂</span><div><div class="hm-t">'+esc(b.name)+'</div><div class="hm-sub">'+esc(b.greeting)+'</div></div></div>'}).join('');
-    }
     box.innerHTML=html;
     if(h.birthdays) h.birthdays.forEach(function(b,i){imgInto($('#hm-bd'+i),API_BASE+'/api/photo/'+b.uid)});
   }
