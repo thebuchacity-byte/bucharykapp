@@ -405,7 +405,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<div class="fld"><label for="f-title">Що заплановано</label><input id="f-title" type="text" maxlength="200" placeholder="Зйомка зі спікеркою"></div>'+
       '<div class="fld" id="f-asgbox" hidden><label for="f-asg">Хто виконує (поставити задачу)</label><select id="f-asg"></select></div>'+
       '<div class="two"><div class="fld"><label for="f-date">Дата</label><input id="f-date" type="date" min="'+today()+'" value="'+today()+'"></div>'+
-      '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="12:00"></div></div>'+
+      '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="12:00"></div></div>'+'<div class="fld"><label for="f-end">Кінець (необовʼязково)</label><input id="f-end" type="time"></div>'+
       '<div class="fld" id="f-adbox" hidden><label>Де вийде реклама (можна кілька)</label><div class="chips" id="f-ap">'+AD_PLACES.map(function(x){return '<button type="button" class="chip" data-ap="'+esc(x)+'" aria-pressed="false">'+esc(x)+'</button>'}).join('')+'</div></div>'+
       '<div class="fld"><label for="f-place" id="f-place-l">Місце (необовʼязково)</label><input id="f-place" type="text" maxlength="200"></div>'+
       '<div class="fld" id="f-ntbox"><label>Кого сповістити</label><div class="chips" id="f-pp">'+whoChips(FORM.people.filter(function(m){return !/\(я\)$/.test(m.name)}),'pp')+'</div></div>'+
@@ -430,7 +430,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     openSheet('<h3>Нова онлайн-зустріч</h3>'+
       '<div class="fld"><label for="f-title">Назва</label><input id="f-title" type="text" maxlength="200" placeholder="Планерка по відео"></div>'+
       '<div class="two"><div class="fld"><label for="f-date">Дата</label><input id="f-date" type="date" min="'+today()+'" value="'+today()+'"></div>'+
-      '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="'+hh+'"></div></div>'+
+      '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="'+hh+'"></div></div>'+'<div class="fld"><label for="f-end">Кінець (необовʼязково)</label><input id="f-end" type="time"></div>'+
       '<div class="fld"><label>З ким (можна кілька або всі)</label><div class="chips" id="f-pp">'+whoChips(FORM.people||[],'pp')+'</div></div>'+
       '<p class="hint">Усі обрані отримають у Telegram посилання на постійний Meet команди, а за 10 хвилин до початку ще й нагадування.</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-sub="meeting">Створити зустріч</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
@@ -473,11 +473,13 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     if(kind==='meeting'){
       var pp=pickedIds('pp'), all=!!document.querySelector('#f-pp [data-all][aria-pressed="true"]');
       if(!all&&!pp.length){ferr('Оберіть, з ким зустріч.');return}
-      body={title:title,date:$('#f-date').value,time:$('#f-time').value,participant_ids:pp,all:all};
+      body={title:title,date:$('#f-date').value,time:$('#f-time').value,participant_ids:pp,all:all,end_time:($('#f-end')||{}).value||''};
       if(!body.date||!body.time){ferr('Вкажіть дату й час.');return}
+      if(body.end_time&&body.end_time<=body.time){ferr('Кінець має бути пізніше за початок.');return}
       url='/api/meeting';
     }else if(kind==='event'){
-      body={project:$('#f-proj').value,title:title,date:$('#f-date').value,time:$('#f-time').value,place:$('#f-place').value.trim()};
+      body={project:$('#f-proj').value,title:title,date:$('#f-date').value,time:$('#f-time').value,place:$('#f-place').value.trim(),end_time:($('#f-end')||{}).value||''};
+      if(body.end_time&&body.end_time<=body.time){ferr('Кінець має бути пізніше за початок.');return}
       if(isAd(body.project)){var ap=Array.prototype.map.call(document.querySelectorAll('#f-ap [data-ap][aria-pressed="true"]'),function(x){return x.dataset.ap});
         if(!ap.length&&!body.place){ferr('Оберіть, де вийде реклама.');return}
         body.place=ap.concat(body.place?[body.place]:[]).join(', ')}
