@@ -544,7 +544,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function money(x){var t=(Math.round(x*100)/100).toFixed(2).replace(/\B(?=(\d{3})+\.)/g,' ').replace('.',',');return t.replace(/,00$/,'')+' грн'}
   function quickRender(){
     var S=D.shop||{};
-    $('#home-quick').innerHTML=S.quick?'<div class="panel"><h2>ШОП</h2><div class="chips"><button class="btn pri" data-quick="sale">Продаж товару</button><button class="btn" data-quick="ad">Запланувати рекламу</button></div></div>':'';
+    $('#home-quick').innerHTML=S.quick?'<div class="panel"><h2>ШОП</h2><div class="chips"><button class="btn pri" data-quick="sale">Продаж товару</button><button class="btn" data-quick="ad">Запланувати рекламу</button><button class="btn" data-quick="income">Внести рекламу</button></div></div>':'';
   }
   function adQuick(){
     loadForm().then(function(){
@@ -840,7 +840,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       if(!tt||!am){fe2.textContent='Заповніть назву й суму.';fe2.hidden=false;return}
       b.disabled=true;expPost('/api/expense',{title:tt,amount:am,kind:EXPK==='inc'?'надходження':''});}
     else if(b.dataset.ek){EXPK=b.dataset.ek;exps();}
-    else if(b.dataset.quick){if(b.dataset.quick==='sale'){show('shop')}else{adQuick()}}
+    else if(b.dataset.quick){if(b.dataset.quick==='sale'){show('shop')}else if(b.dataset.quick==='income'){EXPK='inc';expForm()}else{adQuick()}}
     else if(b.dataset.sell){shopForm(b.dataset.sell);}
     else if(b.dataset.shsize){var gz=b.parentNode;gz.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b&&c.getAttribute('aria-pressed')!=='true'))})}
     else if(b.dataset.shcolor){var gc=b.parentNode;gc.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b&&c.getAttribute('aria-pressed')!=='true'))})}
