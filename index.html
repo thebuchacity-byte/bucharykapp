@@ -406,7 +406,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<div class="fld" id="f-asgbox" hidden><label for="f-asg">Хто виконує (поставити задачу)</label><select id="f-asg"></select></div>'+
       '<div class="two"><div class="fld"><label for="f-date">Дата</label><input id="f-date" type="date" min="'+today()+'" value="'+today()+'"></div>'+
       '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="12:00"></div></div>'+'<div class="fld"><label for="f-end">Кінець (необовʼязково)</label><input id="f-end" type="time"></div>'+
-      '<div class="fld" id="f-adbox" hidden><label>Де вийде реклама (можна кілька)</label><div class="chips" id="f-ap">'+AD_PLACES.map(function(x){return '<button type="button" class="chip" data-ap="'+esc(x)+'" aria-pressed="false">'+esc(x)+'</button>'}).join('')+'</div></div>'+
+      '<div class="fld" id="f-adbox" hidden><label>Де вийде реклама (можна кілька)</label><div class="chips" id="f-ap">'+AD_PLACES.map(function(x){return '<button type="button" class="chip" data-ap="'+esc(x)+'" aria-pressed="false">'+esc(x)+'</button>'}).join('')+'</div>'+
+      '<div class="fld" style="margin-top:12px"><label for="f-amount">Вартість реклами, грн (необовʼязково)</label><input id="f-amount" type="text" inputmode="decimal" placeholder="1500"></div></div>'+
       '<div class="fld"><label for="f-place" id="f-place-l">Місце (необовʼязково)</label><input id="f-place" type="text" maxlength="200"></div>'+
       '<div class="fld" id="f-ntbox"><label>Кого сповістити</label><div class="chips" id="f-pp">'+whoChips(FORM.people.filter(function(m){return !/\(я\)$/.test(m.name)}),'pp')+'</div></div>'+
       '<p class="hint">Подію буде додано в календар. Сповіщення отримають лише обрані люди.</p><p class="err" id="f-err" hidden></p>'+
@@ -482,7 +483,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       if(body.end_time&&body.end_time<=body.time){ferr('Кінець має бути пізніше за початок.');return}
       if(isAd(body.project)){var ap=Array.prototype.map.call(document.querySelectorAll('#f-ap [data-ap][aria-pressed="true"]'),function(x){return x.dataset.ap});
         if(!ap.length&&!body.place){ferr('Оберіть, де вийде реклама.');return}
-        body.place=ap.concat(body.place?[body.place]:[]).join(', ')}
+        body.place=ap.concat(body.place?[body.place]:[]).join(', ');
+        var amEl=$('#f-amount');body.amount=amEl?amEl.value.trim():''}
       if(!body.date||!body.time){ferr('Вкажіть дату й час.');return}
       if((FORM.event_assignees||{})[body.project]){body.assignee_id=$('#f-asg').value||'none'}
       body.notify_ids=pickedIds('pp');
@@ -538,11 +540,22 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     $$('#team .av').forEach(function(el){loadPhoto(el.dataset.av,el,el.dataset.nm)});
   }
   function money(x){var t=(Math.round(x*100)/100).toFixed(2).replace(/\B(?=(\d{3})+\.)/g,' ').replace('.',',');return t.replace(/,00$/,'')+' грн'}
+  var EXPK='exp';
   function exps(){
-    var E=D.exp||{items:[],owner:false},its=E.items||[],bar='';
+    var E=D.exp||{items:[],owner:false,income_ok:false},all=E.items||[],its,bar='',sw='';
+    var inc=!!E.income_ok&&EXPK==='inc';
+    if(E.income_ok){sw='<div class="chips"><button class="chip" data-ek="exp" aria-pressed="'+(!inc)+'">Витрати</button><button class="chip" data-ek="inc" aria-pressed="'+inc+'">Надходження</button></div>'}
+    its=all.filter(function(i){return inc?i.kind==='надходження':i.kind!=='надходження'});
     $('#add-exp').hidden=false;
+    $('#add-exp').textContent=inc?'＋ Нове надходження':'＋ Нова витрата';
     if(E.owner){bar=filtBar('exp',its);its=filtApply('exp',its)}
-    if(!its.length){$('#exp').innerHTML=bar+'<p class="note">'+(E.owner&&(E.items||[]).length?'За цим вибором витрат немає.':'Витрат поки немає.')+'</p>';return}
+    if(inc&&!E.owner){$('#exp').innerHTML=sw+'<p class="note">Надходження бачить лише власник. Нові можна додавати кнопкою нижче.</p>';return}
+    if(inc){
+      var sumI=0;its.forEach(function(i){sumI+=i.amount});
+      $('#exp').innerHTML=sw+bar+'<div class="panel"><div class="lab">Надійшло за вибором</div><div class="big">'+money(sumI)+'</div></div><div class="panel">'+(its.length?its.map(function(i){return '<div class="pt"><div><b>'+esc(i.title)+'</b><p>'+esc(fmtD(i.date))+(E.owner&&i.name?' · '+esc(i.name):'')+'</p></div><div style="text-align:right;white-space:nowrap"><b>'+money(i.amount)+'</b><br><button class="btn" style="margin-top:6px;padding:4px 10px;font-size:12px" data-expdel="'+esc(i.id)+'">Видалити</button></div></div>'}).join(''):'<p class="note">Надходжень поки немає.</p>')+'</div>';
+      return;
+    }
+    if(!its.length){$('#exp').innerHTML=sw+bar+'<p class="note">'+(E.owner&&all.length?'За цим вибором витрат немає.':'Витрат поки немає.')+'</p>';return}
     function row(i,own){return '<div class="pt"><div><b>'+esc(i.title)+'</b><p>'+esc((i.date||'').slice(0,10).split('-').reverse().join('.'))+(i.paid?' · сплачено':'')+'</p></div><div style="text-align:right;white-space:nowrap"><b>'+money(i.amount)+'</b>'+
       (own?'<br><button class="btn" style="margin-top:6px;padding:4px 10px;font-size:12px" data-expaid="'+esc(i.id)+'" data-v2="'+(i.paid?'0':'1')+'">'+(i.paid?'Повернути в борг':'Сплачено')+'</button>':
        (!i.paid?'<br><button class="btn" style="margin-top:6px;padding:4px 10px;font-size:12px" data-expdel="'+esc(i.id)+'">Видалити</button>':''))+'</div></div>'}
@@ -550,18 +563,19 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       var by={},order=[];its.forEach(function(i){var k=i.uid||i.name;if(!by[k]){by[k]={name:i.name,items:[],due:0,all:0};order.push(k)}by[k].items.push(i);by[k].all+=i.amount;if(!i.paid)by[k].due+=i.amount});
       order.sort(function(a,b){return by[b].due-by[a].due});
       var tot=0;order.forEach(function(k){tot+=by[k].due});
-      $('#exp').innerHTML=bar+'<div class="panel"><div class="lab">До виплати за вибором</div><div class="big">'+money(tot)+'</div></div>'+order.map(function(k){var p=by[k];
+      $('#exp').innerHTML=sw+bar+'<div class="panel"><div class="lab">До виплати за вибором</div><div class="big">'+money(tot)+'</div></div>'+order.map(function(k){var p=by[k];
         return '<div class="panel"><div style="display:flex;justify-content:space-between;gap:8px"><h2>'+esc(p.name)+'</h2><b>'+(p.due?money(p.due):'усе сплачено')+'</b></div>'+p.items.map(function(i){return row(i,true)}).join('')+'</div>'}).join('');
     }else{
       var due=0;its.forEach(function(i){if(!i.paid)due+=i.amount});
-      $('#exp').innerHTML='<div class="panel"><div class="lab">Ще не повернено</div><div class="big">'+money(due)+'</div></div><div class="panel">'+its.map(function(i){return row(i,false)}).join('')+'</div>';
+      $('#exp').innerHTML=sw+'<div class="panel"><div class="lab">Ще не повернено</div><div class="big">'+money(due)+'</div></div><div class="panel">'+its.map(function(i){return row(i,false)}).join('')+'</div>';
     }
   }
   function expForm(){
-    openSheet('<h3>Нова витрата</h3>'+
-      '<div class="fld"><label for="f-title">На що</label><input id="f-title" type="text" maxlength="200" placeholder="Наприклад, оренда студії"></div>'+
+    var inc=EXPK==='inc';
+    openSheet('<h3>'+(inc?'Нове надходження':'Нова витрата')+'</h3>'+
+      '<div class="fld"><label for="f-title">'+(inc?'За що':'На що')+'</label><input id="f-title" type="text" maxlength="200" placeholder="Наприклад, оренда студії"></div>'+
       '<div class="fld"><label for="f-amt">Сума, грн</label><input id="f-amt" type="text" inputmode="decimal" placeholder="1500"></div>'+
-      '<p class="hint">Власник отримає сповіщення про цю витрату.</p><p class="err" id="f-err" hidden></p>'+
+      '<p class="hint">'+(inc?'Сума бачитиметься лише Остапі.':'Власник отримає сповіщення про цю витрату.')+'</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-exsave="1">Додати</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
   }
   function expPost(url,body,done){
@@ -747,7 +761,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     else if(b.dataset.exnew){expForm();}
     else if(b.dataset.exsave){var tt=$('#f-title').value.trim(),am=$('#f-amt').value.trim();var fe2=$('#f-err');
       if(!tt||!am){fe2.textContent='Заповніть назву й суму.';fe2.hidden=false;return}
-      b.disabled=true;expPost('/api/expense',{title:tt,amount:am});}
+      b.disabled=true;expPost('/api/expense',{title:tt,amount:am,kind:EXPK==='inc'?'надходження':''});}
+    else if(b.dataset.ek){EXPK=b.dataset.ek;exps();}
     else if(b.dataset.expaid){expPost('/api/expense/act',{id:b.dataset.expaid,action:'paid',paid:b.dataset.v2==='1'});}
     else if(b.dataset.expdel){if(b.dataset.confirm==='1'){expPost('/api/expense/act',{id:b.dataset.expdel,action:'delete'})}else{b.dataset.confirm='1';b.textContent='Точно? Ще раз';}}
     else if(b.dataset.evedit){editForm(b.dataset.evedit);}
