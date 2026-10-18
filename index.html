@@ -569,6 +569,16 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     h+='<div class="panel"><h2>Товари</h2>'+((S.items||[]).length?S.items.map(function(i){return '<div class="pt"><div><b>'+esc(i.name)+'</b></div><div style="text-align:right;white-space:nowrap"><b>'+money(i.price)+'</b><br><button class="btn" style="margin-top:6px;padding:4px 10px;font-size:12px" data-sell="'+esc(i.id)+'">Продаж</button></div></div>'}).join(''):'<p class="note">Каталог порожній.</p>')+'</div>';
     $('#shop').innerHTML=h;
   }
+  function shopTotal(){
+    var t=document.getElementById('f-total'); if(!t)return;
+    var p=parseFloat(t.getAttribute('data-price'))||0;
+    var q=parseInt(document.getElementById('f-qty').value||'1',10)||1;
+    var box=document.getElementById('f-disc-box');
+    var d=(box&&!box.hidden)?(parseFloat((document.getElementById('f-disc').value||'').replace(',','.'))||0):0;
+    var fin=Math.max(0,p*q-d);
+    t.textContent='Разом: '+money(fin)+(d>0?' (знижка '+money(d)+')':'');
+  }
+  document.addEventListener('input',function(e){if(e.target&&(e.target.id==='f-disc'||e.target.id==='f-qty'))shopTotal()});
   function shopForm(id){
     var S=D.shop||{items:[],sizes:[]};
     var it=(S.items||[]).filter(function(x){return x.id===id})[0];
@@ -578,14 +588,18 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<div class="fld"><label for="f-qty">Кількість</label><input id="f-qty" type="text" inputmode="numeric" value="1"></div>'+
       '<div class="fld"><label>Розмір (необовʼязково)</label><div class="chips" id="f-sz">'+(S.sizes||[]).map(function(z){return '<button type="button" class="chip" data-shsize="'+esc(z)+'" aria-pressed="false">'+esc(z)+'</button>'}).join('')+'</div></div>'+
       '<p class="err" id="f-err" hidden></p>'+
+      '<div class="fld"><div class="chips"><button type="button" class="chip" data-shdisc="1" aria-pressed="false">Знижка</button></div></div>'+
+      '<div id="f-disc-box" hidden><div class="fld"><label for="f-disc">Скільки гривень знижки</label><input id="f-disc" type="text" inputmode="decimal" placeholder="0"></div><div class="chips">'+[50,100,200,300,500].map(function(v){return '<button type="button" class="chip" data-shdq="'+v+'" aria-pressed="false">'+v+' грн</button>'}).join('')+'</div></div>'+
+      '<p class="hint" id="f-total" data-price="'+it.price+'">Разом: '+money(it.price)+'</p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-shsave="'+esc(id)+'">Все правильно</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
   }
   function shopSave(id){
     var fe=$('#f-err'), btn=$('#f-ok'), q=($('#f-qty').value||'1').trim();
     var sz=document.querySelector('#f-sz [data-shsize][aria-pressed="true"]');
+    var dbox=document.getElementById('f-disc-box'); var dsc=(dbox&&!dbox.hidden)?(document.getElementById('f-disc').value||''):'';
     if(!LIVE){closeSheet();toast('Тестові дані: нічого не збережено.');return}
     btn.disabled=true;
-    fetch(API_BASE+'/api/shop/sale',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify({product_id:id,qty:q,size:sz?sz.dataset.shsize:''})})
+    fetch(API_BASE+'/api/shop/sale',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify({product_id:id,qty:q,size:sz?sz.dataset.shsize:'',discount:dsc})})
       .then(function(r){return r.json()}).then(function(r){
         if(!r.ok){fe.textContent=r.note||'Не вдалося.';fe.hidden=false;btn.disabled=false;return}
         closeSheet();toast(r.note||'Готово');
@@ -818,6 +832,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     else if(b.dataset.quick){if(b.dataset.quick==='sale'){show('shop')}else{adQuick()}}
     else if(b.dataset.sell){shopForm(b.dataset.sell);}
     else if(b.dataset.shsize){var gz=b.parentNode;gz.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b&&c.getAttribute('aria-pressed')!=='true'))})}
+    else if(b.dataset.shdisc){var bx=document.getElementById('f-disc-box');var on=bx.hidden;bx.hidden=!on;b.setAttribute('aria-pressed',String(on));if(!on){document.getElementById('f-disc').value='';}shopTotal();}
+    else if(b.dataset.shdq){document.getElementById('f-disc').value=b.dataset.shdq;shopTotal();}
     else if(b.dataset.shsave){shopSave(b.dataset.shsave);}
     else if(b.dataset.expaid){expPost('/api/expense/act',{id:b.dataset.expaid,action:'paid',paid:b.dataset.v2==='1'});}
     else if(b.dataset.expdel){if(b.dataset.confirm==='1'){expPost('/api/expense/act',{id:b.dataset.expdel,action:'delete'})}else{b.dataset.confirm='1';b.textContent='Точно? Ще раз';}}
