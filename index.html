@@ -157,7 +157,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         <div class="panel"><h2 style="margin-bottom:4px">Усі мережі, останній місяць</h2><div class="rows" id="all"></div></div>
       </div>
     </section>
-    <section id="v-home" aria-label="Головна"><div id="home-box"></div></section>
+    <section id="v-home" aria-label="Головна"><div id="home-quick"></div><div id="home-box"></div></section>
     <section id="v-cal" aria-label="Календар" hidden><p class="note" id="msg-cal" hidden></p><div style="display:flex;flex-direction:column;gap:14px"><button class="btn pri addbtn" id="add-ev" data-add="event" hidden>＋ Нова подія</button><button class="btn pri addbtn" id="add-tk" data-add="task" hidden>＋ Нова задача</button><button class="btn addbtn" id="add-mt" data-add="meeting" hidden>🎥 Нова онлайн-зустріч</button><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div><div class="chips" id="cproj"></div></div></section>
     <section id="v-team" aria-label="Команда" hidden><p class="note" id="msg-team" hidden></p><p class="hint" style="margin:0 2px 10px">з — відкриті задачі, п — найближчі події, де людина зайнята</p><div id="team" style="display:flex;flex-direction:column;gap:10px"></div></section>
     <section id="v-wk" aria-label="Проєкти" hidden><p class="note" id="msg-wk" hidden></p>
@@ -165,6 +165,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         <div id="wk" style="display:flex;flex-direction:column;gap:10px"></div>
       </div>
     </section>
+    <section id="v-shop" aria-label="ШОП" hidden><div id="shop"></div></section>
     <section id="v-ck" aria-label="Чек-ліст" hidden><div id="ck-box"></div></section>
     <section id="v-exp" aria-label="Витрати" hidden><p class="note" id="msg-exp" hidden></p>
       <div style="display:flex;flex-direction:column;gap:14px">
@@ -181,6 +182,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     <button role="tab" data-v="team" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3.2 3.2 0 0 1 0 5.6M18 14.3c1.8.8 3 2.6 3 4.7"/></svg>Команда</button>
     <button role="tab" id="tab-wk" data-v="wk" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Проєкти</button>
     <button role="tab" data-v="exp" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/></svg>Витрати</button>
+    <button role="tab" id="tab-shop" data-v="shop" aria-selected="false" hidden><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></svg>ШОП</button>
     <button role="tab" data-v="ck" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Чек-ліст</button>
     <button role="tab" id="tab-stats" data-v="stats" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Статистика</button>
   </div></nav>
@@ -540,6 +542,56 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     $$('#team .av').forEach(function(el){loadPhoto(el.dataset.av,el,el.dataset.nm)});
   }
   function money(x){var t=(Math.round(x*100)/100).toFixed(2).replace(/\B(?=(\d{3})+\.)/g,' ').replace('.',',');return t.replace(/,00$/,'')+' грн'}
+  function quickRender(){
+    var S=D.shop||{};
+    $('#home-quick').innerHTML=S.quick?'<div class="panel"><h2>ШОП</h2><div class="chips"><button class="btn pri" data-quick="sale">Продаж товару</button><button class="btn" data-quick="ad">Запланувати рекламу</button></div></div>':'';
+  }
+  function adQuick(){
+    loadForm().then(function(){
+      if(!FORM.event_projects.length){toast('Немає проєктів, у які ви можете додавати події.');return}
+      eventForm();
+      var s=$('#f-proj');
+      var o=[].filter.call(s.options,function(x){return isAd(x.value)})[0];
+      if(o){s.value=o.value;adToggle();ntSet()}
+    });
+  }
+  function shopRender(){
+    quickRender();
+    var S=D.shop||{allowed:false,items:[]};
+    $('#tab-shop').hidden=!S.allowed;
+    if(!S.allowed){$('#shop').innerHTML='';return}
+    var h='';
+    if(S.owner&&S.stats){
+      var t=S.stats.total;
+      h+='<div class="panel"><div class="lab">Продано всього</div><div class="big">'+money(t.sum)+'</div><p class="hint">'+t.qty+' шт.</p></div>';
+      h+='<div class="panel"><h2>За місяцями</h2>'+(S.stats.months.length?S.stats.months.map(function(m){return '<div class="pt"><div><b>'+esc(mLabel(m.month))+'</b><p>'+m.qty+' шт.</p></div><b>'+money(m.sum)+'</b></div>'}).join(''):'<p class="note">Продажів поки немає.</p>')+'</div>';
+    }
+    h+='<div class="panel"><h2>Товари</h2>'+((S.items||[]).length?S.items.map(function(i){return '<div class="pt"><div><b>'+esc(i.name)+'</b></div><div style="text-align:right;white-space:nowrap"><b>'+money(i.price)+'</b><br><button class="btn" style="margin-top:6px;padding:4px 10px;font-size:12px" data-sell="'+esc(i.id)+'">Продаж</button></div></div>'}).join(''):'<p class="note">Каталог порожній.</p>')+'</div>';
+    $('#shop').innerHTML=h;
+  }
+  function shopForm(id){
+    var S=D.shop||{items:[],sizes:[]};
+    var it=(S.items||[]).filter(function(x){return x.id===id})[0];
+    if(!it)return;
+    openSheet('<h3>'+esc(it.name)+'</h3>'+
+      '<p class="hint">Ціна: '+money(it.price)+'</p>'+
+      '<div class="fld"><label for="f-qty">Кількість</label><input id="f-qty" type="text" inputmode="numeric" value="1"></div>'+
+      '<div class="fld"><label>Розмір (необовʼязково)</label><div class="chips" id="f-sz">'+(S.sizes||[]).map(function(z){return '<button type="button" class="chip" data-shsize="'+esc(z)+'" aria-pressed="false">'+esc(z)+'</button>'}).join('')+'</div></div>'+
+      '<p class="err" id="f-err" hidden></p>'+
+      '<div class="acts"><button class="btn pri" id="f-ok" data-shsave="'+esc(id)+'">Все правильно</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
+  }
+  function shopSave(id){
+    var fe=$('#f-err'), btn=$('#f-ok'), q=($('#f-qty').value||'1').trim();
+    var sz=document.querySelector('#f-sz [data-shsize][aria-pressed="true"]');
+    if(!LIVE){closeSheet();toast('Тестові дані: нічого не збережено.');return}
+    btn.disabled=true;
+    fetch(API_BASE+'/api/shop/sale',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify({product_id:id,qty:q,size:sz?sz.dataset.shsize:''})})
+      .then(function(r){return r.json()}).then(function(r){
+        if(!r.ok){fe.textContent=r.note||'Не вдалося.';fe.hidden=false;btn.disabled=false;return}
+        closeSheet();toast(r.note||'Готово');
+        return api('/api/shop').then(function(x){D.shop=x;shopRender()});
+      }).catch(function(){fe.textContent='Не вдалося зберегти. Спробуйте ще раз.';fe.hidden=false;btn.disabled=false});
+  }
   var EXPK='exp';
   function exps(){
     var E=D.exp||{items:[],owner:false,income_ok:false},all=E.items||[],its,bar='',sw='';
@@ -722,7 +774,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function show(v){
     st.view=v;
     $$('nav button').forEach(function(x){x.setAttribute('aria-selected',x.dataset.v===v)});
-    ['home','stats','cal','team','exp','wk','ck'].forEach(function(n){$('#v-'+n).hidden=n!==v});
+    ['home','stats','cal','team','exp','wk','ck','shop'].forEach(function(n){$('#v-'+n).hidden=n!==v});
     if(v==='ck') ckShow();
     window.scrollTo(0,0);
   }
@@ -763,6 +815,10 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       if(!tt||!am){fe2.textContent='Заповніть назву й суму.';fe2.hidden=false;return}
       b.disabled=true;expPost('/api/expense',{title:tt,amount:am,kind:EXPK==='inc'?'надходження':''});}
     else if(b.dataset.ek){EXPK=b.dataset.ek;exps();}
+    else if(b.dataset.quick){if(b.dataset.quick==='sale'){show('shop')}else{adQuick()}}
+    else if(b.dataset.sell){shopForm(b.dataset.sell);}
+    else if(b.dataset.shsize){var gz=b.parentNode;gz.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b&&c.getAttribute('aria-pressed')!=='true'))})}
+    else if(b.dataset.shsave){shopSave(b.dataset.shsave);}
     else if(b.dataset.expaid){expPost('/api/expense/act',{id:b.dataset.expaid,action:'paid',paid:b.dataset.v2==='1'});}
     else if(b.dataset.expdel){if(b.dataset.confirm==='1'){expPost('/api/expense/act',{id:b.dataset.expdel,action:'delete'})}else{b.dataset.confirm='1';b.textContent='Точно? Ще раз';}}
     else if(b.dataset.evedit){editForm(b.dataset.evedit);}
@@ -787,6 +843,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         $('#home-box').innerHTML='<p class="note">Головна не завантажилась. Закрийте застосунок і відкрийте знову.</p>';
       });
       jobs.push(api('/api/expenses').then(function(r){D.exp=r;exps()}));
+      jobs.push(api('/api/shop').then(function(r){D.shop=r;shopRender()}).catch(function(){$('#tab-shop').hidden=true}));
       jobs.push(api('/api/team').then(function(r){D.team=r.members;team()}));
       if(me.stats) jobs.push(api('/api/stats?months=12').then(function(r){D.labels=r.labels;D.nets=r.nets;stats()}));
       return Promise.all(jobs);
