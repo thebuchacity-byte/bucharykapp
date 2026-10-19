@@ -666,22 +666,41 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function stockForm(){
     var S=D.shop||{items:[]};
     var rows=(S.items||[]).map(function(i){var s=i.stock||{};
+      if((i.sizes||[]).length){
+        var ss=i.size_stock||{};
+        var lines=i.sizes.map(function(z){var v=ss[z]||{office:0,spekla:0};
+          return '<div style="display:flex;gap:8px;align-items:flex-end"><span style="width:80px;font-size:13px;padding-bottom:8px">'+esc(z)+'</span>'+
+            '<label style="flex:1;font-size:12px">Офіс<input data-sz="'+esc(z)+'" data-f="office" type="text" inputmode="numeric" value="'+(v.office||0)+'" style="width:100%"></label>'+
+            '<label style="flex:1;font-size:12px">Spekla<input data-sz="'+esc(z)+'" data-f="spekla" type="text" inputmode="numeric" value="'+(v.spekla||0)+'" style="width:100%"></label></div>'}).join('');
+        return '<div data-row="'+esc(i.id)+'" data-sized="1" class="pt" style="flex-direction:column;align-items:stretch;gap:6px"><b>'+esc(i.name)+'</b>'+lines+
+          '<p class="hint" data-tot>Офіс: '+(s.office||0)+' · Spekla: '+(s.spekla||0)+'</p></div>';
+      }
       return '<div data-row="'+esc(i.id)+'" class="pt" style="flex-direction:column;align-items:stretch;gap:6px"><b>'+esc(i.name)+'</b><div style="display:flex;gap:8px">'+
         [['total','Всього'],['office','Офіс'],['spekla','Spekla']].map(function(f){var v=f[0]==='total'?((+s.office||0)+(+s.spekla||0)):(s[f[0]]||0);return '<label style="flex:1;font-size:12px">'+f[1]+'<input data-f="'+f[0]+'" type="text" inputmode="numeric" value="'+v+'"'+(f[0]==='total'?' readonly':'')+' style="width:100%'+(f[0]==='total'?';opacity:.7':'')+'"></label>'}).join('')+
         '</div></div>'}).join('');
-    openSheet('<h3>Склад</h3><p class="hint">Вносьте кількості в Офіс і Spekla. «Всього» рахується само як їх сума.</p><div id="stk-list">'+rows+'</div>'+
+    openSheet('<h3>Склад</h3><p class="hint">Для товарів із розмірами вносьте кількість кожного розміру окремо в Офіс і в Spekla: загальна кількість рахується сама. Інші товари — загальні числа Офіс і Spekla.</p><div id="stk-list">'+rows+'</div>'+
       '<div class="acts"><button class="btn pri" data-stocksave="1">Зберегти склад</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
   }
   document.addEventListener('input',function(e){
     var f=e.target&&e.target.dataset&&e.target.dataset.f;
     if(!f||(f!=='office'&&f!=='spekla')||!e.target.closest('#stk-list')) return;
-    var row=e.target.closest('[data-row]'), get=function(k){return parseInt((row.querySelector('[data-f="'+k+'"]').value||'0').replace(/\D/g,''),10)||0};
+    var row=e.target.closest('[data-row]');
+    if(row.hasAttribute('data-sized')){
+      var sum=function(k){return [].reduce.call(row.querySelectorAll('[data-f="'+k+'"]'),function(a,x){return a+(parseInt((x.value||'0').replace(/\D/g,''),10)||0)},0)};
+      row.querySelector('[data-tot]').textContent='Офіс: '+sum('office')+' · Spekla: '+sum('spekla');
+      return;
+    }
+    var get=function(k){return parseInt((row.querySelector('[data-f="'+k+'"]').value||'0').replace(/\D/g,''),10)||0};
     row.querySelector('[data-f="total"]').value=get('office')+get('spekla');
   });
   function stockSave(btn){
     if(!LIVE){closeSheet();toast('Тестові дані: нічого не збережено.');return}
     var items=[].map.call(document.querySelectorAll('#stk-list [data-row]'),function(r){
       var g=function(f){return (r.querySelector('[data-f="'+f+'"]').value||'0')};
+      if(r.hasAttribute('data-sized')){
+        var sizes={}; [].forEach.call(r.querySelectorAll('[data-sz]'),function(x){var z=x.dataset.sz; sizes[z]=sizes[z]||{}; sizes[z][x.dataset.f]=x.value||'0'});
+        return {id:r.getAttribute('data-row'),sizes:sizes};
+      }
       return {id:r.getAttribute('data-row'),total:g('total'),office:g('office'),spekla:g('spekla')}});
     btn.disabled=true;
     fetch(API_BASE+'/api/shop/stock',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify({items:items})})
@@ -698,6 +717,25 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     if(custom)h+='<input id="'+inputId+'" type="text" placeholder="'+ph+'" style="margin-top:8px">';
     return h+'</div>';
   }
+  function sizeBlock(it){
+    var list=it.sizes||[];
+    if(!list.length&&!it.custom_size) return '';
+    var h='<div class="fld"><label>Розмір</label><div class="chips" id="f-sz">'+list.map(function(z){return '<button type="button" class="chip" data-shsize="'+esc(z)+'" aria-pressed="false">'+esc(z)+'</button>'}).join('')+'</div>';
+    if(it.custom_size) h+='<input id="f-csz" type="text" placeholder="Свій розмір" style="margin-top:8px">';
+    return h+'</div>';
+  }
+  // Кількість у дужках біля розміру: для обраного місця, а якщо місце ще не обрано — разом
+  function refreshSizes(it){
+    var lc=document.querySelector('#f-loc [data-shloc][aria-pressed="true"]'); var loc=lc?lc.dataset.shloc:'';
+    document.querySelectorAll('#f-sz [data-shsize]').forEach(function(c){
+      var z=c.dataset.shsize, ss=(it.size_stock||{})[z];
+      if(!it.size_tracked||!ss) return;
+      var n=loc?(ss[loc]||0):((ss.office||0)+(ss.spekla||0));
+      c.textContent=z+' ('+n+')';
+      c.disabled=n<=0;
+      if(c.disabled) c.setAttribute('aria-pressed','false');
+    });
+  }
   function shopForm(id){
     var S=D.shop||{items:[],sizes:[]};
     var it=(S.items||[]).filter(function(x){return x.id===id})[0];
@@ -705,7 +743,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     openSheet('<h3>'+esc(it.name)+'</h3>'+
       '<p class="hint">Ціна: '+money(it.price)+'</p>'+
       '<div class="fld"><label for="f-qty">Кількість</label><input id="f-qty" type="text" inputmode="numeric" value="1"></div>'+
-      optBlock('Розмір',it.sizes||[],!!it.custom_size,'data-shsize','f-sz','f-csz','Свій розмір')+
+      sizeBlock(it)+
       optBlock('Колір',it.colors||[],!!it.custom_color,'data-shcolor','f-cl','f-ccl','Свій колір')+
       '<p class="err" id="f-err" hidden></p>'+
       '<div class="fld"><div class="chips"><button type="button" class="chip" data-shdisc="1" aria-pressed="false">Знижка</button></div></div>'+
@@ -717,6 +755,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         '<button type="button" class="chip" data-shloc="spekla" aria-pressed="false">Spekla (є '+((it.stock||{}).spekla||0)+')</button></div></div>'+
       '<p class="hint" id="f-total" data-price="'+it.price+'">Разом: '+money(it.price)+'</p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-shsave="'+esc(id)+'">Все правильно</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
+    refreshSizes(it);
+    document.querySelectorAll('#f-loc [data-shloc]').forEach(function(b){b.addEventListener('click',function(){setTimeout(function(){refreshSizes(it)},0)})});
   }
   function shopSave(id){
     var fe=$('#f-err'), btn=$('#f-ok'), q=($('#f-qty').value||'1').trim();
