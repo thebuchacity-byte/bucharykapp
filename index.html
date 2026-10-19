@@ -586,8 +586,69 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       h+='<div class="panel"><div class="lab">Продано всього</div><div class="big">'+money(t.sum)+'</div><p class="hint">'+t.qty+' шт.</p></div>';
       h+='<div class="panel"><h2>За місяцями</h2>'+(S.stats.months.length?S.stats.months.map(function(m){return '<div class="pt"><div><b>'+esc(mLabel(m.month))+'</b><p>'+m.qty+' шт.</p></div><b>'+money(m.sum)+'</b></div>'}).join(''):'<p class="note">Продажів поки немає.</p>')+'</div>';
     }
+    if(S.owner) h+='<div class="panel"><button class="btn pri" id="arch-open">Архів продажів: виправити або скасувати</button></div>';
     h+='<div class="panel"><h2>Товари</h2>'+((S.quick||S.owner)?'<button class="btn" data-stock="1" style="margin-bottom:10px">Склад</button>':'')+((S.items||[]).length?S.items.map(function(i){return '<div class="pt"><div><b>'+esc(i.name)+'</b><p class="hint">'+stockTxt(i)+'</p></div><div style="text-align:right;white-space:nowrap"><b>'+money(i.price)+'</b><br><button class="btn" style="margin-top:6px;padding:4px 10px;font-size:12px" data-sell="'+esc(i.id)+'">Продаж</button></div></div>'}).join(''):'<p class="note">Каталог порожній.</p>')+'</div>';
     $('#shop').innerHTML=h;
+    var ao=document.getElementById('arch-open'); if(ao) ao.onclick=archiveOpen;
+  }
+  function archMoney(s){return money(parseFloat(String(s.total||'0').replace(',','.'))||0)}
+  function archiveOpen(){
+    if(!LIVE){toast('Тестові дані: архів недоступний.');return}
+    api('/api/shop/sales').then(function(x){
+      var list=x.sales||[];
+      window.ARCH=list;
+      var html='<h3>Архів продажів</h3><p class="hint">Скасовані продажі лишаються в списку, але в підсумки не входять.</p>'+
+        (list.length?list.map(function(s,i){
+          var act=s.status==='Активний';
+          return '<div class="pt" style="flex-direction:column;align-items:stretch;gap:4px;opacity:'+(act?1:0.55)+'">'+
+            '<div><b>'+esc(s.name)+'</b> '+esc(s.size)+' '+esc(s.color)+' × '+esc(s.qty)+'</div>'+
+            '<p class="hint">'+esc(s.date)+' · '+esc(s.channel)+' · '+esc(s.location)+' · '+archMoney(s)+'</p>'+
+            (act?'<div style="display:flex;gap:8px"><button class="btn" data-afix="'+i+'">Виправити</button><button class="btn" data-acan="'+i+'">Скасувати</button></div>'
+                :'<p class="hint">'+esc(s.status)+': '+esc(s.reason)+(s.changed?' ('+esc(s.changed)+')':'')+'</p>')+
+            '</div>';
+        }).join(''):'<p class="note">Продажів поки немає.</p>')+
+        '<div class="acts"><button class="btn" data-sub="cancel">Закрити</button></div>';
+      openSheet(html);
+      document.querySelectorAll('#box [data-afix]').forEach(function(b){b.addEventListener('click',function(){saleEdit(+b.dataset.afix,'fix')})});
+      document.querySelectorAll('#box [data-acan]').forEach(function(b){b.addEventListener('click',function(){saleEdit(+b.dataset.acan,'cancel')})});
+    }).catch(function(){toast('Не вдалося відкрити архів.')});
+  }
+  function saleEdit(i,mode){
+    var s=(window.ARCH||[])[i]; if(!s) return;
+    var items=(D.shop&&D.shop.items)||[], item=items.filter(function(x){return x.name===s.name})[0];
+    if(mode==='fix'&&!item){toast('Товару немає в каталозі. Спершу оновіть каталог.');return}
+    var html='<h3>'+(mode==='fix'?'Виправити продаж':'Скасувати продаж')+'</h3><p class="hint">'+esc(s.name)+' · '+esc(s.date)+'</p>';
+    if(mode==='fix'){
+      html+='<div class="fld"><label for="e-qty">Кількість</label><input id="e-qty" type="text" inputmode="numeric" value="'+esc(s.qty)+'"></div>'+
+        '<div class="fld"><label for="e-disc">Знижка, грн</label><input id="e-disc" type="text" inputmode="decimal" value="'+esc(s.discount)+'"></div>'+
+        '<div class="fld"><label>Як продано</label><div class="chips" id="e-ch">'+[['cash','Готівка'],['bank','Банка'],['fop','ФОП'],['site','Сайт']].map(function(c){return '<button type="button" class="chip" data-ech="'+c[0]+'" aria-pressed="'+(c[1]===s.channel)+'">'+c[1]+'</button>'}).join('')+'</div></div>'+
+        '<div class="fld"><label>Звідки продано</label><div class="chips" id="e-loc">'+[['office','Офіс'],['spekla','Spekla']].map(function(c){return '<button type="button" class="chip" data-eloc="'+c[0]+'" aria-pressed="'+(c[1]===s.location)+'">'+c[1]+'</button>'}).join('')+'</div></div>';
+    }
+    html+='<div class="fld"><label for="e-reason">Причина (обов\'язково)</label><input id="e-reason" type="text" maxlength="200"></div>'+
+      '<p class="err" id="e-err" hidden></p>'+
+      '<div class="acts"><button class="btn pri" id="e-ok">'+(mode==='fix'?'Зберегти виправлення':'Скасувати продаж')+'</button><button class="btn" data-sub="cancel">Назад</button></div>';
+    openSheet(html);
+    function single(attr){document.querySelectorAll('#box ['+attr+']').forEach(function(c){c.addEventListener('click',function(){document.querySelectorAll('#box ['+attr+']').forEach(function(x){x.setAttribute('aria-pressed',x===c)})})})}
+    single('data-ech'); single('data-eloc');
+    function ferrE(t){var e=document.getElementById('e-err');e.textContent=t;e.hidden=!t}
+    document.getElementById('e-ok').addEventListener('click',function(){
+      var reason=document.getElementById('e-reason').value.trim();
+      if(!reason){ferrE('Напишіть причину.');return}
+      var body={id:s.id,reason:reason};
+      if(mode==='fix'){
+        var chc=document.querySelector('#e-ch [data-ech][aria-pressed="true"]'), lc=document.querySelector('#e-loc [data-eloc][aria-pressed="true"]');
+        if(!chc||!lc){ferrE('Оберіть, як і звідки продано.');return}
+        body.correct={product_id:item.id,qty:document.getElementById('e-qty').value.trim()||'1',size:s.size,color:s.color,location:lc.dataset.eloc,channel:chc.dataset.ech,discount:document.getElementById('e-disc').value.trim()};
+      }
+      if(!LIVE){closeSheet();toast('Тестові дані: нічого не збережено.');return}
+      document.getElementById('e-ok').disabled=true;
+      fetch(API_BASE+'/api/shop/cancel',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify(body)})
+        .then(function(r){return r.json()}).then(function(r){
+          if(!r.ok){ferrE(r.note||'Не вдалося.');document.getElementById('e-ok').disabled=false;return}
+          closeSheet();toast(r.note||'Готово');
+          return api('/api/shop').then(function(x){D.shop=x;shopRender()});
+        }).catch(function(){ferrE('Не вдалося зберегти. Спробуйте ще раз.');document.getElementById('e-ok').disabled=false});
+    });
   }
   function shopTotal(){
     var t=document.getElementById('f-total'); if(!t)return;
