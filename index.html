@@ -22,12 +22,15 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 .brand{font-weight:700;font-size:20px;letter-spacing:-.01em}
 .brand small{display:block;font-weight:400;font-size:12px;color:var(--muted);letter-spacing:0}
 .demo{font-family:var(--mono);font-size:11px;background:var(--accent-soft);color:var(--accent);padding:4px 8px;border-radius:4px;white-space:nowrap}
-main{flex:1;padding:4px 16px 96px;display:flex;flex-direction:column;gap:16px}
+main{flex:1;padding:4px 16px 124px;display:flex;flex-direction:column;gap:16px}
 nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-nav .in{max-width:560px;margin:0 auto;display:flex}
-nav button{flex:1;min-width:0;background:none;border:0;color:var(--muted);font:500 11px var(--font);padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
-nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+nav button{min-width:0;background:none;border:0;color:var(--muted);font:500 11px var(--font);padding:7px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+nav button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav button[aria-selected="true"]{color:var(--accent)}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:72px;padding:12px 6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;color:var(--fg);font:600 13px var(--font);cursor:pointer}
+.tile svg{width:24px;height:24px;stroke:var(--accent);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:500 13px var(--font);padding:7px 13px;border-radius:999px;cursor:pointer}
@@ -102,7 +105,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
 .fld input[type=date],.fld input[type=time]{-webkit-appearance:none;appearance:none;display:block;box-sizing:border-box;width:100%;max-width:100%;min-height:44px;text-align:left}
 .hint{font-size:13px;color:var(--muted);margin:0}
 .err{font-size:14px;color:var(--bad);margin:0}
-.toast{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));max-width:528px;margin:0 auto;background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:14px;text-align:center}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(124px + env(safe-area-inset-bottom,0px));max-width:528px;margin:0 auto;background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:14px;text-align:center}
 .note{color:var(--muted);text-align:center;padding:24px 8px;margin:0}
 .st.reported{color:var(--accent)}
 [hidden]{display:none!important}
@@ -157,7 +160,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         <div class="panel"><h2 style="margin-bottom:4px">Усі мережі, останній місяць</h2><div class="rows" id="all"></div></div>
       </div>
     </section>
-    <section id="v-home" aria-label="Головна"><div id="home-quick"></div><div id="home-box"></div></section>
+    <section id="v-home" aria-label="Головна"><div class="tiles" id="home-tiles"></div><div id="home-quick"></div><div id="home-box"></div></section>
     <section id="v-cal" aria-label="Календар" hidden><p class="note" id="msg-cal" hidden></p><div style="display:flex;flex-direction:column;gap:14px"><button class="btn pri addbtn" id="add-ev" data-add="event" hidden>＋ Нова подія</button><button class="btn pri addbtn" id="add-tk" data-add="task" hidden>＋ Нова задача</button><button class="btn addbtn" id="add-mt" data-add="meeting" hidden>🎥 Нова онлайн-зустріч</button><div id="cal" style="display:flex;flex-direction:column;gap:18px"></div><div class="chips" id="cproj"></div></div></section>
     <section id="v-team" aria-label="Команда" hidden><p class="note" id="msg-team" hidden></p><p class="hint" style="margin:0 2px 10px">з — відкриті задачі, п — найближчі події, де людина зайнята</p><div id="team" style="display:flex;flex-direction:column;gap:10px"></div></section>
     <section id="v-wk" aria-label="Проєкти" hidden><p class="note" id="msg-wk" hidden></p>
@@ -616,7 +619,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       h+='<div class="panel"><div class="lab">Продано всього</div><div class="big">'+money(t.sum)+'</div><p class="hint">'+t.qty+' шт.</p></div>';
       h+='<div class="panel"><h2>За місяцями</h2>'+(S.stats.months.length?S.stats.months.map(function(m){return '<div class="pt"><div><b>'+esc(mLabel(m.month))+'</b><p>'+m.qty+' шт.</p></div><b>'+money(m.sum)+'</b></div>'}).join(''):'<p class="note">Продажів поки немає.</p>')+'</div>';
     }
-    if(S.owner) h+='<div class="panel"><button class="btn pri" id="arch-open">Архів продажів: виправити або скасувати</button></div>';
+    if(S.archive) h+='<div class="panel"><button class="btn pri" id="arch-open">Архів продажів: виправити або скасувати</button></div>';
     h+='<div class="panel"><h2>Товари</h2>'+((S.quick||S.owner)?'<button class="btn" data-stock="1" style="margin-bottom:10px">Склад</button>':'')+((S.items||[]).length?S.items.map(function(i){return '<div class="pt"><div><b>'+esc(i.name)+'</b><p class="hint">'+stockTxt(i)+'</p></div><div style="text-align:right;white-space:nowrap"><b>'+money(i.price)+'</b><br><button class="btn" style="margin-top:6px;padding:4px 10px;font-size:12px" data-sell="'+esc(i.id)+'">Продаж</button></div></div>'}).join(''):'<p class="note">Каталог порожній.</p>')+'</div>';
     $('#shop').innerHTML=h;
     var ao=document.getElementById('arch-open'); if(ao) ao.onclick=archiveOpen;
@@ -999,8 +1002,12 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     });
   }
 
+  function tilesBuild(){
+    $('#home-tiles').innerHTML=$$('nav button').map(function(b){return '<button class="tile" data-v="'+b.dataset.v+'"'+(b.hidden?' hidden':'')+'>'+b.innerHTML+'</button>'}).join('');
+  }
   function show(v){
     st.view=v;
+    tilesBuild();
     $$('nav button').forEach(function(x){x.setAttribute('aria-selected',x.dataset.v===v)});
     ['home','stats','cal','team','exp','wk','ck','shop','grants'].forEach(function(n){$('#v-'+n).hidden=n!==v});
     if(v==='ck') ckShow();
@@ -1074,6 +1081,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       D.me=me;$('#add-ev').hidden=!me.can_event;$('#add-mt').hidden=!me.can_meeting;$('#add-tk').hidden=!me.can_task;
       if(!me.stats){$('#tab-stats').hidden=true}
       $('#tab-grants').hidden=!me.grants;
+      tilesBuild();
       var jobs=[api('/api/events').then(function(r){D.events=r.events;cal()})];
       jobs.push(api('/api/works').then(function(r){D.wk=r;works();if(!r.viewer){$('#tab-wk').hidden=true}}));
       $('#home-box').innerHTML='<p class="note">Завантажую головну…</p>';
@@ -1084,12 +1092,13 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       jobs.push(api('/api/shop').then(function(r){D.shop=r;shopRender()}).catch(function(){$('#tab-shop').hidden=true}));
       jobs.push(api('/api/team').then(function(r){D.team=r.members;team()}));
       if(me.stats) jobs.push(api('/api/stats?months=12').then(function(r){D.labels=r.labels;D.nets=r.nets;stats()}));
-      return Promise.all(jobs);
+      return Promise.all(jobs).then(tilesBuild);
     }).catch(function(e){
       var t=e&&e.code===403?'Цей застосунок лише для команди Thebuchacity. Попросіть додати ваш Telegram ID у таблицю.':'Не вдалося завантажити дані. Закрийте застосунок і відкрийте знову.';
       ['stats','cal','team','exp','wk'].forEach(function(n){say(n,t)});
     });
   }
+  tilesBuild();
   boot();
 })();
 </script>
