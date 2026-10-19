@@ -22,12 +22,18 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 .brand{font-weight:700;font-size:20px;letter-spacing:-.01em}
 .brand small{display:block;font-weight:400;font-size:12px;color:var(--muted);letter-spacing:0}
 .demo{font-family:var(--mono);font-size:11px;background:var(--accent-soft);color:var(--accent);padding:4px 8px;border-radius:4px;white-space:nowrap}
-main{flex:1;padding:4px 16px 124px;display:flex;flex-direction:column;gap:16px}
+main{flex:1;padding:4px 16px 96px;display:flex;flex-direction:column;gap:16px}
 nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-nav .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
-nav button{min-width:0;background:none;border:0;color:var(--muted);font:500 11px var(--font);padding:7px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-nav button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav .in{max-width:560px;margin:0 auto;display:flex}
+nav button{flex:1;min-width:0;background:none;border:0;color:var(--muted);font:500 11px var(--font);padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav button[aria-selected="true"]{color:var(--accent)}
+body.ceo nav .in{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+body.ceo nav button{flex:none;padding:7px 2px 8px;gap:2px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.ceo nav button svg{width:20px;height:20px}
+body.ceo main{padding-bottom:124px}
+body.ceo .toast{bottom:calc(124px + env(safe-area-inset-bottom,0px))}
+.tiles:empty{display:none}
 .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
 .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:72px;padding:12px 6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;color:var(--fg);font:600 13px var(--font);cursor:pointer}
 .tile svg{width:24px;height:24px;stroke:var(--accent);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -105,7 +111,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
 .fld input[type=date],.fld input[type=time]{-webkit-appearance:none;appearance:none;display:block;box-sizing:border-box;width:100%;max-width:100%;min-height:44px;text-align:left}
 .hint{font-size:13px;color:var(--muted);margin:0}
 .err{font-size:14px;color:var(--bad);margin:0}
-.toast{position:fixed;left:16px;right:16px;bottom:calc(124px + env(safe-area-inset-bottom,0px));max-width:528px;margin:0 auto;background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:14px;text-align:center}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));max-width:528px;margin:0 auto;background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:14px;text-align:center}
 .note{color:var(--muted);text-align:center;padding:24px 8px;margin:0}
 .st.reported{color:var(--accent)}
 [hidden]{display:none!important}
@@ -569,7 +575,11 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function money(x){var t=(Math.round(x*100)/100).toFixed(2).replace(/\B(?=(\d{3})+\.)/g,' ').replace('.',',');return t.replace(/,00$/,'')+' грн'}
   function quickRender(){
     var S=D.shop||{};
-    $('#home-quick').innerHTML=S.quick?'<div class="panel"><h2>ШОП</h2><div class="chips"><button class="btn pri" data-quick="sale">Продаж товару</button><button class="btn" data-quick="ad">Запланувати рекламу</button><button class="btn" data-quick="income">Внести рекламу</button></div></div>':'';
+    var me0=D.me||{}, extra='';
+    if(!me0.shop_home){
+      extra='<button class="btn" data-quick="ad">Запланувати рекламу</button><button class="btn" data-quick="income">Внести рекламу</button>'+(!me0.ceo_home&&me0.can_task?'<button class="btn" data-add="task">＋ Поставити задачу</button>':'');
+    }
+    $('#home-quick').innerHTML=S.quick?'<div class="panel"><h2>ШОП</h2><div class="chips"><button class="btn pri" data-quick="sale">Внести продаж</button>'+extra+'</div></div>':'';
   }
   function adQuick(){
     loadForm().then(function(){
@@ -979,26 +989,33 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       var fb=el.nextElementSibling; if(fb&&fb.classList.contains('hm-fb')) fb.hidden=true;
     }).catch(function(){});
   }
+  function editorHtml(ed){
+    var dl=function(x){var q=new Date(x+'T12:00:00');return q.getDate()+' '+MG[q.getMonth()]};
+    return '<h3 class="hm-h">Редакція</h3>'+
+      '<div class="chips" style="margin-bottom:12px"><button class="btn pri" data-add="task">＋ Задача</button><button class="btn" data-add="meeting">＋ Зустріч</button></div>'+
+      '<div class="panel"><div class="lab">Задачі на найближчі 7 днів</div><div class="big">'+ed.open_count+'</div>'+(ed.overdue_count?'<div class="hm-sub" style="color:#C8323C">Прострочено: '+ed.overdue_count+'</div>':'')+
+      (ed.tasks.length?ed.tasks.map(function(t){return '<div class="pt"><div><b>'+esc(t.title)+'</b><div class="hm-sub">'+esc(t.project)+' · '+esc(t.assignee)+' · до '+esc(dl(t.deadline))+(t.overdue?' · прострочено':'')+'</div></div></div>'}).join(''):'<p class="note">На найближчі 7 днів задач немає.</p>')+'</div>';
+  }
   function homeRender(h){
-    var box=$('#home-box'), html='';
+    if(h.shop_only){ $('#home-box').innerHTML=''; return; }
+    var box=$('#home-box'), me0=D.me||{}, ceo=!!me0.ceo_home;
+    var d=new Date((h.date||'')+'T12:00:00');
+    var dateTxt=isNaN(d)?'':WD[d.getDay()]+', '+d.getDate()+' '+MG[d.getMonth()]+' '+d.getFullYear();
+    var html=ceo?'':'<div class="hm-date">'+esc(dateTxt)+'</div>';
     if(h.weather) html+='<div class="hm-wx">'+esc(h.weather.icon)+' '+esc(h.weather.city)+', '+h.weather.temp+'°C · '+esc(h.weather.text)+'</div>';
     if(h.birthdays&&h.birthdays.length){
       html+='<h3 class="hm-h">День народження</h3>';
       html+=h.birthdays.map(function(b,i){return '<div class="hm-bd"><img class="hm-ph" id="hm-bd'+i+'" alt="" hidden><span class="hm-ph hm-fb">🎂</span><div><div class="hm-t">'+esc(b.name)+'</div><div class="hm-sub">'+esc(b.greeting)+'</div></div></div>'}).join('');
     }
-    var me0=D.me||{};
-    html+='<div class="chips" style="margin-bottom:14px">'+(me0.can_task?'<button class="btn pri" data-add="task">＋ Поставити задачу</button>':'')+(me0.can_event?'<button class="btn pri" data-add="event">＋ Створити подію</button>':'')+'</div>';
+    if(ceo){
+      html+='<div class="chips" style="margin-bottom:14px">'+(me0.can_task?'<button class="btn pri" data-add="task">＋ Поставити задачу</button>':'')+(me0.can_event?'<button class="btn pri" data-add="event">＋ Створити подію</button>':'')+'</div>';
+    } else {
+      html+='<button class="btn pri addbtn hm-work" data-wknew="1">＋ '+esc(h.work_label||'Що я зробив?')+'</button>';
+    }
     if(h.next_event){var ne=h.next_event,left=ne.days>0?ne.days+' дн. '+ne.hours+' год':(ne.hours>0?ne.hours+' год '+ne.minutes+' хв':ne.minutes+' хв');
       html+='<div class="hm-cd"><div class="hm-cd-l">До найближчої події</div><div class="hm-cd-n">'+left+'</div><div class="hm-sub">'+esc(ne.title)+' · '+esc(ne.project)+' · '+esc(ne.date)+', '+esc(ne.time)+'</div></div>';}
     if(h.saturday) html+='<div class="hm-sat">📸 Сьогодні субота — «Суботні фотки»! Кидайте в чат свої кадри з тижня.</div>';
-    if(h.editor){
-      var ed=h.editor, dl=function(x){var q=new Date(x+'T12:00:00');return q.getDate()+' '+MG[q.getMonth()]};
-      html+='<h3 class="hm-h">Редакція</h3>';
-      html+='<div class="chips" style="margin-bottom:12px"><button class="btn pri" data-add="task">＋ Задача</button><button class="btn" data-add="meeting">＋ Зустріч</button></div>';
-      html+='<div class="panel"><div class="lab">Відкриті задачі</div><div class="big">'+ed.open_count+'</div>'+(ed.overdue_count?'<div class="hm-sub" style="color:#C8323C">Прострочено: '+ed.overdue_count+'</div>':'')+
-        (ed.tasks.length?ed.tasks.map(function(t){return '<div class="pt"><div><b>'+esc(t.title)+'</b><div class="hm-sub">'+esc(t.project)+' · '+esc(t.assignee)+' · до '+esc(dl(t.deadline))+(t.overdue?' · прострочено':'')+'</div></div></div>'}).join(''):'<p class="note">Відкритих задач немає.</p>')+'</div>';
-      html+='<div class="panel"><div class="lab">Найближчі 7 днів</div>'+(ed.week.length?ed.week.map(function(e){return '<div class="hm-card"><div class="hm-time">'+esc(dl(e.date))+'<br>'+esc(e.time)+'</div><div><div class="hm-t">'+esc(e.title)+'</div><div class="hm-sub">'+esc(e.project)+'</div></div></div>'}).join(''):'<p class="note">Заходів на тиждень немає.</p>')+'</div>';
-    }
+    if(h.editor) html+=editorHtml(h.editor);
     html+='<h3 class="hm-h">Сьогодні заплановано</h3>';
     html+=(h.events&&h.events.length)?h.events.map(function(e){return '<div class="hm-card"><div class="hm-time">'+esc(e.time)+'</div><div><div class="hm-t">'+esc(e.title)+'</div><div class="hm-sub">'+esc(e.project)+(e.place?' · '+esc(e.place):'')+'</div></div></div>'}).join(''):'<p class="note">На сьогодні подій немає.</p>';
     box.innerHTML=html;
@@ -1010,6 +1027,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   }
 
   function tilesBuild(){
+    if(!(D.me&&D.me.ceo_home)){$('#home-tiles').innerHTML='';return;}
     $('#home-tiles').innerHTML=$$('nav button').map(function(b){return '<button class="tile" data-v="'+b.dataset.v+'"'+(b.hidden?' hidden':'')+'>'+b.innerHTML+'</button>'}).join('');
   }
   function show(v){
@@ -1085,10 +1103,11 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     if(!LIVE){demo();homeRender(HOME_DEMO);$('#add-ev').hidden=false;$('#add-mt').hidden=false;$('#add-tk').hidden=false;D.wk={viewer:true,projects:['Стаття','Подкаст'],types:['Інтерв\'ю','Стаття','Репортаж','Вертикальне відео','Відео на YouTube'],items:[{id:'w1',date:'2026-10-11',uid:3,name:'Ольга Присяжна',project:'Стаття',type:'Репортаж',title:'Форум у Бучі'},{id:'w2',date:'2026-10-09',uid:3,name:'Ольга Присяжна',project:'Стаття',type:'Інтерв\'ю',title:''},{id:'w3',date:'2026-10-10',uid:2,name:'Марія Карпенко',project:'Стаття',type:'Відео на YouTube',title:'Як живе місто'}]};D.exp={owner:true,items:[{id:'x1',date:'2026-10-10 12:00',uid:2,name:'Марія Карпенко',title:'Оренда студії',amount:1500,paid:false},{id:'x2',date:'2026-10-09 15:00',uid:2,name:'Марія Карпенко',title:'Таксі на зйомку',amount:240,paid:true},{id:'x3',date:'2026-10-11 10:00',uid:1,name:'Богдан Макаренко',title:'Карта пам’яті',amount:890,paid:false}]};stats();cal();tasks();team();exps();works();return}
     say('cal','Завантажую…');
     api('/api/me').then(function(me){
-      D.me=me;$('#add-ev').hidden=!me.can_event;$('#add-mt').hidden=!me.can_meeting;$('#add-tk').hidden=!me.can_task;
+      D.me=me;document.body.classList.toggle('ceo',!!me.ceo_home);$('#add-ev').hidden=!me.can_event;$('#add-mt').hidden=!me.can_meeting;$('#add-tk').hidden=!me.can_task;
       if(!me.stats){$('#tab-stats').hidden=true}
       $('#tab-grants').hidden=!me.grants;
       tilesBuild();
+      if(me.shop_home) show('shop');
       var jobs=[api('/api/events').then(function(r){D.events=r.events;cal()})];
       jobs.push(api('/api/works').then(function(r){D.wk=r;works();if(!r.viewer){$('#tab-wk').hidden=true}}));
       $('#home-box').innerHTML='<p class="note">Завантажую головну…</p>';
