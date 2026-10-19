@@ -166,6 +166,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       </div>
     </section>
     <section id="v-shop" aria-label="ШОП" hidden><div id="shop"></div></section>
+    <section id="v-grants" aria-label="Гранти" hidden><p class="note" id="msg-grants" hidden></p><div id="grants"></div></section>
     <section id="v-ck" aria-label="Чек-ліст" hidden><div id="ck-box"></div></section>
     <section id="v-exp" aria-label="Витрати" hidden><p class="note" id="msg-exp" hidden></p>
       <div style="display:flex;flex-direction:column;gap:14px">
@@ -184,6 +185,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     <button role="tab" data-v="exp" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/></svg>Витрати</button>
     <button role="tab" id="tab-shop" data-v="shop" aria-selected="false" hidden><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></svg>ШОП</button>
     <button role="tab" data-v="ck" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Чек-ліст</button>
+    <button role="tab" id="tab-grants" data-v="grants" aria-selected="false" hidden><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5"/></svg>Гранти</button>
     <button role="tab" id="tab-stats" data-v="stats" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Статистика</button>
   </div></nav>
 </div>
@@ -575,6 +577,34 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       if(o){s.value=o.value;adToggle();ntSet()}
     });
   }
+  var GR={open:''};
+  function grantsShow(){
+    api('/api/grants').then(function(r){
+      D.grants=r.grants||[]; D.grantsRegistry=r.registry||'';
+      grantsRender();
+    }).catch(function(){ $('#grants').innerHTML=''; say('grants','Гранти не завантажились. Спробуйте ще раз.'); });
+  }
+  function grantsRender(){
+    var list=D.grants||[];
+    say('grants','');
+    var h='<div class="panel"><h2>Активні гранти</h2><p class="hint">Натисніть на грант, щоб побачити деталі.</p>'+
+      (D.grantsRegistry?'<a class="hint" href="'+esc(D.grantsRegistry)+'" target="_blank" rel="noopener">Реєстр грантів (Google Sheet)</a>':'')+'</div>';
+    if(!list.length){ $('#grants').innerHTML=h+'<p class="note">Активних грантів поки немає.</p>'; return; }
+    list.forEach(function(g){
+      var open=GR.open===g.id;
+      h+='<button class="panel" data-gr="'+esc(g.id)+'" aria-expanded="'+open+'" style="display:block;width:100%;text-align:left;margin-bottom:10px">'+
+         '<b>'+esc(g.name)+'</b><p class="hint">'+esc(g.id)+' · '+esc(g.donor)+' · '+esc(g.amount)+'</p>';
+      if(open){
+        h+='<div style="margin-top:10px"><p><b>Статус:</b> '+esc(g.status)+'</p><p><b>Сума:</b> '+esc(g.amount)+'</p>';
+        if(g.dates&&g.dates.length) h+='<p><b>Дати:</b></p>'+g.dates.map(function(d){return '<p class="hint">'+esc(d.date)+' — '+esc(d.what)+'</p>'}).join('');
+        if(g.milestones&&g.milestones.length) h+='<p><b>Майлстоуни (ціль):</b></p>'+g.milestones.map(function(m){return '<p class="hint">'+esc(m.name)+': '+esc(m.target)+'</p>'}).join('');
+        if(g.note) h+='<p class="hint">'+esc(g.note)+'</p>';
+        h+='</div>';
+      }
+      h+='</button>';
+    });
+    $('#grants').innerHTML=h;
+  }
   function shopRender(){
     quickRender();
     var S=D.shop||{allowed:false,items:[]};
@@ -666,12 +696,15 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function stockForm(){
     var S=D.shop||{items:[]};
     var rows=(S.items||[]).map(function(i){var s=i.stock||{};
-      if((i.sizes||[]).length){
-        var ss=i.size_stock||{};
-        var lines=i.sizes.map(function(z){var v=ss[z]||{office:0,spekla:0};
-          return '<div style="display:flex;gap:8px;align-items:flex-end"><span style="width:80px;font-size:13px;padding-bottom:8px">'+esc(z)+'</span>'+
-            '<label style="flex:1;font-size:12px">Офіс<input data-sz="'+esc(z)+'" data-f="office" type="text" inputmode="numeric" value="'+(v.office||0)+'" style="width:100%"></label>'+
-            '<label style="flex:1;font-size:12px">Spekla<input data-sz="'+esc(z)+'" data-f="spekla" type="text" inputmode="numeric" value="'+(v.spekla||0)+'" style="width:100%"></label></div>'}).join('');
+      var groups=[];
+      if((i.sizes||[]).length) groups.push(['size','Розміри',i.sizes,i.size_stock||{}]);
+      if((i.colors||[]).length) groups.push(['color','Кольори',i.colors,i.color_stock||{}]);
+      if(groups.length){
+        var lines=groups.map(function(g){
+          return '<p class="hint" style="margin:6px 0 0">'+g[1]+':</p>'+g[2].map(function(z){var v=g[3][z]||{office:0,spekla:0};
+            return '<div style="display:flex;gap:8px;align-items:flex-end"><span style="width:80px;font-size:13px;padding-bottom:8px">'+esc(z)+'</span>'+
+              '<label style="flex:1;font-size:12px">Офіс<input data-k="'+g[0]+'" data-sz="'+esc(z)+'" data-f="office" type="text" inputmode="numeric" value="'+(v.office||0)+'" style="width:100%"></label>'+
+              '<label style="flex:1;font-size:12px">Spekla<input data-k="'+g[0]+'" data-sz="'+esc(z)+'" data-f="spekla" type="text" inputmode="numeric" value="'+(v.spekla||0)+'" style="width:100%"></label></div>'}).join('')}).join('');
         return '<div data-row="'+esc(i.id)+'" data-sized="1" class="pt" style="flex-direction:column;align-items:stretch;gap:6px"><b>'+esc(i.name)+'</b>'+lines+
           '<p class="hint" data-tot>Офіс: '+(s.office||0)+' · Spekla: '+(s.spekla||0)+'</p></div>';
       }
@@ -686,7 +719,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     if(!f||(f!=='office'&&f!=='spekla')||!e.target.closest('#stk-list')) return;
     var row=e.target.closest('[data-row]');
     if(row.hasAttribute('data-sized')){
-      var sum=function(k){return [].reduce.call(row.querySelectorAll('[data-f="'+k+'"]'),function(a,x){return a+(parseInt((x.value||'0').replace(/\D/g,''),10)||0)},0)};
+      var K=row.querySelector('[data-k="size"]')?'size':'color';  // підсумок рахуємо за розмірами, а якщо їх немає — за кольорами
+      var sum=function(k){return [].reduce.call(row.querySelectorAll('[data-k="'+K+'"][data-f="'+k+'"]'),function(a,x){return a+(parseInt((x.value||'0').replace(/\D/g,''),10)||0)},0)};
       row.querySelector('[data-tot]').textContent='Офіс: '+sum('office')+' · Spekla: '+sum('spekla');
       return;
     }
@@ -698,8 +732,9 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     var items=[].map.call(document.querySelectorAll('#stk-list [data-row]'),function(r){
       var g=function(f){return (r.querySelector('[data-f="'+f+'"]').value||'0')};
       if(r.hasAttribute('data-sized')){
-        var sizes={}; [].forEach.call(r.querySelectorAll('[data-sz]'),function(x){var z=x.dataset.sz; sizes[z]=sizes[z]||{}; sizes[z][x.dataset.f]=x.value||'0'});
-        return {id:r.getAttribute('data-row'),sizes:sizes};
+        var sizes={}, colors={};
+        [].forEach.call(r.querySelectorAll('[data-sz]'),function(x){var m=x.dataset.k==='color'?colors:sizes, z=x.dataset.sz; m[z]=m[z]||{}; m[z][x.dataset.f]=x.value||'0'});
+        return {id:r.getAttribute('data-row'),sizes:sizes,colors:colors};
       }
       return {id:r.getAttribute('data-row'),total:g('total'),office:g('office'),spekla:g('spekla')}});
     btn.disabled=true;
@@ -724,16 +759,25 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     if(it.custom_size) h+='<input id="f-csz" type="text" placeholder="Свій розмір" style="margin-top:8px">';
     return h+'</div>';
   }
-  // Кількість у дужках біля розміру: для обраного місця, а якщо місце ще не обрано — разом
-  function refreshSizes(it){
+  function colorBlock(it){
+    var list=it.colors||[];
+    if(!list.length&&!it.custom_color) return '';
+    var h='<div class="fld"><label>Колір</label><div class="chips" id="f-cl">'+list.map(function(z){return '<button type="button" class="chip" data-shcolor="'+esc(z)+'" aria-pressed="false">'+esc(z)+'</button>'}).join('')+'</div>';
+    if(it.custom_color) h+='<input id="f-ccl" type="text" placeholder="Свій колір" style="margin-top:8px">';
+    return h+'</div>';
+  }
+  // Кількість у дужках біля розміру і кольору: для обраного місця, а якщо місце ще не обрано — разом
+  function refreshChips(it){
     var lc=document.querySelector('#f-loc [data-shloc][aria-pressed="true"]'); var loc=lc?lc.dataset.shloc:'';
-    document.querySelectorAll('#f-sz [data-shsize]').forEach(function(c){
-      var z=c.dataset.shsize, ss=(it.size_stock||{})[z];
-      if(!it.size_tracked||!ss) return;
-      var n=loc?(ss[loc]||0):((ss.office||0)+(ss.spekla||0));
-      c.textContent=z+' ('+n+')';
-      c.disabled=n<=0;
-      if(c.disabled) c.setAttribute('aria-pressed','false');
+    [['#f-sz','data-shsize',it.size_tracked,it.size_stock],['#f-cl','data-shcolor',it.color_tracked,it.color_stock]].forEach(function(g){
+      if(!g[2]) return;
+      document.querySelectorAll(g[0]+' ['+g[1]+']').forEach(function(c){
+        var z=c.getAttribute(g[1]), ss=(g[3]||{})[z]; if(!ss) return;
+        var n=loc?(ss[loc]||0):((ss.office||0)+(ss.spekla||0));
+        c.textContent=z+' ('+n+')';
+        c.disabled=n<=0;
+        if(c.disabled) c.setAttribute('aria-pressed','false');
+      });
     });
   }
   function shopForm(id){
@@ -744,7 +788,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<p class="hint">Ціна: '+money(it.price)+'</p>'+
       '<div class="fld"><label for="f-qty">Кількість</label><input id="f-qty" type="text" inputmode="numeric" value="1"></div>'+
       sizeBlock(it)+
-      optBlock('Колір',it.colors||[],!!it.custom_color,'data-shcolor','f-cl','f-ccl','Свій колір')+
+      colorBlock(it)+
       '<p class="err" id="f-err" hidden></p>'+
       '<div class="fld"><div class="chips"><button type="button" class="chip" data-shdisc="1" aria-pressed="false">Знижка</button></div></div>'+
       '<div id="f-disc-box" hidden><div class="fld"><label for="f-disc">Скільки гривень знижки</label><input id="f-disc" type="text" inputmode="decimal" placeholder="0"></div><div class="chips">'+[50,100,200,300,500].map(function(v){return '<button type="button" class="chip" data-shdq="'+v+'" aria-pressed="false">'+v+' грн</button>'}).join('')+'</div></div>'+
@@ -755,8 +799,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         '<button type="button" class="chip" data-shloc="spekla" aria-pressed="false">Spekla (є '+((it.stock||{}).spekla||0)+')</button></div></div>'+
       '<p class="hint" id="f-total" data-price="'+it.price+'">Разом: '+money(it.price)+'</p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-shsave="'+esc(id)+'">Все правильно</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
-    refreshSizes(it);
-    document.querySelectorAll('#f-loc [data-shloc]').forEach(function(b){b.addEventListener('click',function(){setTimeout(function(){refreshSizes(it)},0)})});
+    refreshChips(it);
+    document.querySelectorAll('#f-loc [data-shloc]').forEach(function(b){b.addEventListener('click',function(){setTimeout(function(){refreshChips(it)},0)})});
   }
   function shopSave(id){
     var fe=$('#f-err'), btn=$('#f-ok'), q=($('#f-qty').value||'1').trim();
@@ -958,13 +1002,15 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function show(v){
     st.view=v;
     $$('nav button').forEach(function(x){x.setAttribute('aria-selected',x.dataset.v===v)});
-    ['home','stats','cal','team','exp','wk','ck','shop'].forEach(function(n){$('#v-'+n).hidden=n!==v});
+    ['home','stats','cal','team','exp','wk','ck','shop','grants'].forEach(function(n){$('#v-'+n).hidden=n!==v});
     if(v==='ck') ckShow();
+    if(v==='grants') grantsShow();
     window.scrollTo(0,0);
   }
   document.addEventListener('click',function(ev){
     var b=ev.target.closest('button'); if(!b) return;
     if(b.dataset.v) show(b.dataset.v);
+    else if(b.dataset.gr){GR.open=GR.open===b.dataset.gr?'':b.dataset.gr;grantsRender();}
     else if(b.dataset.ckopen!==undefined){CK.open=b.dataset.ckopen;ckRender();window.scrollTo(0,0)}
     else if(b.dataset.ckback!==undefined){CK.open='';ckRender();window.scrollTo(0,0)}
     else if(b.dataset.ckkey){ckToggle(b.dataset.ckkey,b.dataset.ckid,b.getAttribute('aria-checked')!=='true')}
@@ -1027,6 +1073,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     api('/api/me').then(function(me){
       D.me=me;$('#add-ev').hidden=!me.can_event;$('#add-mt').hidden=!me.can_meeting;$('#add-tk').hidden=!me.can_task;
       if(!me.stats){$('#tab-stats').hidden=true}
+      $('#tab-grants').hidden=!me.grants;
       var jobs=[api('/api/events').then(function(r){D.events=r.events;cal()})];
       jobs.push(api('/api/works').then(function(r){D.wk=r;works();if(!r.viewer){$('#tab-wk').hidden=true}}));
       $('#home-box').innerHTML='<p class="note">Завантажую головну…</p>';
