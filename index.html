@@ -412,7 +412,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<div class="fld" style="margin-top:12px"><label for="f-amount">Вартість реклами, грн (необовʼязково)</label><input id="f-amount" type="text" inputmode="decimal" placeholder="1500"></div></div>'+
       '<div class="fld"><label for="f-place" id="f-place-l">Місце (необовʼязково)</label><input id="f-place" type="text" maxlength="200"></div>'+
       '<div class="fld" id="f-ntbox"><label>Кого сповістити</label><div class="chips" id="f-pp">'+whoChips(FORM.people.filter(function(m){return !/\(я\)$/.test(m.name)}),'pp')+'</div></div>'+
-      '<p class="hint">Подію буде додано в календар. Сповіщення отримають лише обрані люди.</p><p class="err" id="f-err" hidden></p>'+
+      matBlock()+'<p class="hint">Подію буде додано в календар. Сповіщення отримають лише обрані люди.</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-sub="event">Додати в календар</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
     $('#f-proj').addEventListener('change',function(){adToggle();asgToggle();ntSet()});adToggle();asgToggle();ntSet();
   }
@@ -435,7 +435,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<div class="two"><div class="fld"><label for="f-date">Дата</label><input id="f-date" type="date" min="'+today()+'" value="'+today()+'"></div>'+
       '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="'+hh+'"></div></div>'+'<div class="fld"><label for="f-end">Кінець (необовʼязково)</label><input id="f-end" type="time"></div>'+
       '<div class="fld"><label>З ким (можна кілька або всі)</label><div class="chips" id="f-pp">'+whoChips(FORM.people||[],'pp')+'</div></div>'+
-      '<p class="hint">Усі обрані отримають у Telegram посилання на постійний Meet команди, а за 10 хвилин до початку ще й нагадування.</p><p class="err" id="f-err" hidden></p>'+
+      matBlock()+'<p class="hint">Усі обрані отримають у Telegram посилання на постійний Meet команди, а за 10 хвилин до початку ще й нагадування.</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-sub="meeting">Створити зустріч</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
   }
   function taskProj(){var n=$('#f-proj').value;
@@ -451,6 +451,22 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       $('#f-when').innerHTML='<div class="two"><div class="fld"><label for="f-dl">Дедлайн</label><input id="f-dl" type="date" min="'+today()+'" value="'+today()+'"></div><div class="fld"><label for="f-due">До години</label><input id="f-due" type="time"></div></div>';
     }
   }
+  function matBlock(){return '<div class="fld"><label for="f-mat-files">Додаткові матеріали (необовʼязково)</label>'+
+      '<input id="f-mat-files" type="file" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip">'+
+      '<textarea id="f-mat-links" rows="2" maxlength="2000" placeholder="Посилання, по одному в рядку" style="margin-top:8px"></textarea>'+
+      '<p class="hint">Фото, файли й посилання людина отримає в Telegram разом із задачею чи подією.</p></div>'}
+  function readB64(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res({name:f.name,mime:f.type||'application/octet-stream',data:String(r.result).split(',')[1]||''})};r.onerror=function(){rej(new Error('Не вдалося прочитати файл «'+f.name+'».'))};r.readAsDataURL(f)})}
+  function attachMaterials(body){
+    var el=$('#f-mat-links'), fe=$('#f-mat-files');
+    var links=el?el.value.split(/\n+/).map(function(s){return s.trim()}).filter(Boolean):[];
+    var files=fe?Array.prototype.slice.call(fe.files||[]):[];
+    if(!links.length&&!files.length) return Promise.resolve();
+    if(files.length>10) return Promise.reject(new Error('Можна додати до 10 файлів.'));
+    var bad=files.filter(function(f){return f.size>10*1024*1024})[0];
+    if(bad) return Promise.reject(new Error('Файл «'+bad.name+'» завеликий (до 10 МБ).'));
+    if(files.reduce(function(a,f){return a+f.size},0)>30*1024*1024) return Promise.reject(new Error('Усі файли разом до 30 МБ.'));
+    return Promise.all(files.map(readB64)).then(function(fs){body.materials={links:links,files:fs}});
+  }
   function taskForm(){
     var ps=FORM.task_projects;
     openSheet('<h3>Нова задача</h3>'+
@@ -459,7 +475,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<div class="fld"><label>Виконавці (можна кілька)</label><div class="chips" id="f-who"></div></div>'+
       '<div class="fld" id="f-when"></div>'+
       '<div class="fld" id="f-kindbox"><label for="f-kind">Чек-ліст (тип роботи)</label><select id="f-kind">'+opt('','Без чек-ліста')+(FORM.checklists||[]).map(function(c){return opt(c.key,c.name)}).join('')+'</select></div>'+
-      '<p class="hint">Кожен обраний отримає свою задачу й сповіщення в боті.</p><p class="err" id="f-err" hidden></p>'+
+      matBlock()+'<p class="hint">Кожен обраний отримає свою задачу й сповіщення в боті.</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-sub="task">Поставити задачу</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
     taskFields();
     $('#f-proj').addEventListener('change',taskFields);
@@ -505,13 +521,15 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     }
     ferr('');$('#f-ok').disabled=true;
     if(!LIVE){closeSheet();toast('Тестові дані: нічого не збережено й не надіслано.');return}
-    fetch(API_BASE+url,{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify(body)})
-      .then(function(r){return r.json()}).then(function(r){
-        if(!r.ok){ferr(r.note||'Не вдалося зберегти.');$('#f-ok').disabled=false;return}
-        closeSheet();toast(r.note||'Готово');
-        api('/api/events').then(function(x){D.events=x.events;cal()});
-        api('/api/tasks').then(function(x){D.tasks=x.tasks;tasks()});
-      }).catch(function(){ferr('Не вдалося зберегти. Спробуйте ще раз.');$('#f-ok').disabled=false});
+    attachMaterials(body).then(function(){
+      return fetch(API_BASE+url,{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify(body)})
+        .then(function(r){return r.json()}).then(function(r){
+          if(!r.ok){ferr(r.note||'Не вдалося зберегти.');$('#f-ok').disabled=false;return}
+          closeSheet();toast(r.note||'Готово');
+          api('/api/events').then(function(x){D.events=x.events;cal()});
+          api('/api/tasks').then(function(x){D.tasks=x.tasks;tasks()});
+        }).catch(function(){ferr('Не вдалося зберегти. Спробуйте ще раз.');$('#f-ok').disabled=false});
+    }).catch(function(e){ferr(e&&e.message?e.message:'Не вдалося підготувати матеріали.');$('#f-ok').disabled=false});
   }
   var PH={};
   function initials(n){var w=n.replace(/[()]/g,' ').split(/\s+/).filter(Boolean);return ((w[0]||'?')[0]+(w[1]?w[1][0]:'')).toUpperCase()}
