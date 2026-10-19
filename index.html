@@ -611,7 +611,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       openSheet(html);
       document.querySelectorAll('#box [data-afix]').forEach(function(b){b.addEventListener('click',function(){saleEdit(+b.dataset.afix,'fix')})});
       document.querySelectorAll('#box [data-acan]').forEach(function(b){b.addEventListener('click',function(){saleEdit(+b.dataset.acan,'cancel')})});
-    }).catch(function(){toast('Не вдалося відкрити архів.')});
+    }).catch(function(e){toast('Не вдалося відкрити архів (код '+((e&&e.code)||'мережа')+').')});
   }
   function saleEdit(i,mode){
     var s=(window.ARCH||[])[i]; if(!s) return;
