@@ -622,7 +622,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       if(open){
         h+='<div style="margin-top:10px"><p><b>Статус:</b> '+esc(g.status)+'</p><p><b>Сума:</b> '+esc(g.amount)+'</p>';
         if(g.dates&&g.dates.length) h+='<p><b>Дати:</b></p>'+g.dates.map(function(d){return '<p class="hint">'+esc(d.date)+' — '+esc(d.what)+'</p>'}).join('');
-        if(g.milestones&&g.milestones.length) h+='<p><b>Майлстоуни (ціль):</b></p>'+g.milestones.map(function(m){return '<p class="hint">'+esc(m.name)+': '+esc(m.target)+'</p>'}).join('');
+        if(g.youtube) h+='<p class="hint">Подкасти з плейлиста TBC REC: '+g.youtube.qualified+' повних опублікованих з міткою G-051 (у плейлисті '+g.youtube.total+' відео, з міткою '+g.youtube.tagged+').</p>';
+        if(g.milestones&&g.milestones.length) h+='<p><b>Майлстоуни (факт / ціль):</b></p>'+g.milestones.map(function(m){return '<p class="hint">'+esc(m.name)+': '+(m.done!=null?esc(m.done)+' / ':'')+esc(m.target)+'</p>'}).join('');
         if(g.note) h+='<p class="hint">'+esc(g.note)+'</p>';
         h+='</div>';
       }
