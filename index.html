@@ -845,7 +845,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         return api('/api/shop').then(function(x){D.shop=x;shopRender()});
       }).catch(function(){fe.textContent='Не вдалося зберегти. Спробуйте ще раз.';fe.hidden=false;btn.disabled=false});
   }
-  var EXPK='exp';
+  var EXPK='exp', EXPKIND='';
+  function incKind(i){var t=i.title||'';if(/^продано/i.test(t))return 'shop';if(/реклам/i.test(t))return 'ad';return 'other'}
   function exps(){
     var E=D.exp||{items:[],owner:false,income_ok:false},all=E.items||[],its,bar='',sw='';
     var inc=!!E.income_ok&&EXPK==='inc';
@@ -856,8 +857,11 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     if(E.owner){bar=filtBar('exp',its);its=filtApply('exp',its)}
     if(inc&&!E.owner){$('#exp').innerHTML=sw+'<p class="note">Надходження бачить лише власник. Нові можна додавати кнопкою нижче.</p>';return}
     if(inc){
+      var kinds={'':'Усі','ad':'Реклама','shop':'Мерч (ШОП)','other':'Інше'};
+      var kb='<div class="chips" style="margin-bottom:10px">'+Object.keys(kinds).map(function(k){return '<button class="chip" data-fk="'+k+'" aria-pressed="'+(EXPKIND===k)+'">'+kinds[k]+'</button>'}).join('')+'</div>';
+      if(EXPKIND) its=its.filter(function(i){return incKind(i)===EXPKIND});
       var sumI=0;its.forEach(function(i){sumI+=i.amount});
-      $('#exp').innerHTML=sw+bar+'<div class="panel"><div class="lab">Надійшло за вибором</div><div class="big">'+money(sumI)+'</div></div><div class="panel">'+(its.length?its.map(function(i){return '<div class="pt"><div><b>'+esc(i.title)+'</b><p>'+esc(fmtD(i.date))+(E.owner&&i.name?' · '+esc(i.name):'')+'</p></div><div style="text-align:right;white-space:nowrap"><b>'+money(i.amount)+'</b><br><button class="btn" style="margin-top:6px;padding:4px 10px;font-size:12px" data-expdel="'+esc(i.id)+'">Видалити</button></div></div>'}).join(''):'<p class="note">Надходжень поки немає.</p>')+'</div>';
+      $('#exp').innerHTML=sw+bar+kb+'<div class="panel"><div class="lab">Надійшло за вибором</div><div class="big">'+money(sumI)+'</div></div><div class="panel">'+(its.length?its.map(function(i){return '<div class="pt"><div><b>'+esc(i.title)+'</b><p>'+esc(fmtD(i.date))+(E.owner&&i.name?' · '+esc(i.name):'')+'</p></div><div style="text-align:right;white-space:nowrap"><b>'+money(i.amount)+'</b><br><button class="btn" style="margin-top:6px;padding:4px 10px;font-size:12px" data-expdel="'+esc(i.id)+'">Видалити</button></div></div>'}).join(''):'<p class="note">Надходжень поки немає.</p>')+'</div>';
       return;
     }
     if(!its.length){$('#exp').innerHTML=sw+bar+'<p class="note">'+(E.owner&&all.length?'За цим вибором витрат немає.':'Витрат поки немає.')+'</p>';return}
@@ -1124,6 +1128,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       var all=document.querySelector('#f-'+k2+' [data-all]');
       if(all){var rest=document.querySelectorAll('#f-'+k2+' .chip:not([data-all])');
         all.setAttribute('aria-pressed',Array.prototype.every.call(rest,function(c){return c.getAttribute('aria-pressed')==='true'}))}}
+    else if(b.dataset.fk!==undefined){EXPKIND=b.dataset.fk;exps();}
     else if(b.dataset.fp!==undefined){var a1=b.dataset.fp.split('|');FS[a1[0]].p=a1[1];if(a1[0]==='wk')works();else exps();}
     else if(b.dataset.fq){var a2=b.dataset.fq.split('|');FS[a2[0]].m=a2[1]==='all'?'':a2[1];if(a2[0]==='wk')works();else exps();}
     else if(b.dataset.wknew){wkForm();}
