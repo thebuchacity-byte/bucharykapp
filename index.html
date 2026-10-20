@@ -41,6 +41,18 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:500 13px var(--font);padding:7px 13px;border-radius:999px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.swrow{display:flex;gap:8px;margin-bottom:12px}
+.swbtn{flex:1;text-align:center;font:600 16px var(--font);padding:14px 10px;border-radius:12px}
+.adgrp{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px}
+.adrow{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:12px 14px;margin:0 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;color:var(--fg);font:500 15px var(--font);text-align:left;cursor:pointer}
+.adrow[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.adck{flex:none;width:24px;height:24px;border:2px solid var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--on-accent);font-size:15px;font-weight:700}
+.adrow[aria-pressed="true"] .adck{background:var(--accent);border-color:var(--accent)}
+.adrow[aria-pressed="true"] .adck::after{content:'✓'}
+.adt{flex:1;min-width:0}
+.adt small{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:2px}
+.ada{font-weight:700;white-space:nowrap}
+.adsum{display:flex;justify-content:space-between;align-items:center;font-size:17px;margin:14px 0 4px;padding:12px 2px;border-top:1px solid var(--line)}
 .seg{display:flex;background:var(--line);border-radius:8px;padding:3px}
 .seg button{flex:1;border:0;background:none;color:var(--muted);font:500 13px var(--font);padding:7px;border-radius:6px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg)}
@@ -837,7 +849,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function exps(){
     var E=D.exp||{items:[],owner:false,income_ok:false},all=E.items||[],its,bar='',sw='';
     var inc=!!E.income_ok&&EXPK==='inc';
-    if(E.income_ok){sw='<div class="chips"><button class="chip" data-ek="exp" aria-pressed="'+(!inc)+'">Витрати</button><button class="chip" data-ek="inc" aria-pressed="'+inc+'">Надходження</button></div>'}
+    if(E.income_ok){sw='<div class="swrow"><button class="chip swbtn" data-ek="exp" aria-pressed="'+(!inc)+'">Витрати</button><button class="chip swbtn" data-ek="inc" aria-pressed="'+inc+'">Надходження</button></div>'}
     its=all.filter(function(i){return inc?i.kind==='надходження':i.kind!=='надходження'});
     $('#add-exp').hidden=false;
     $('#add-exp').textContent=inc?'＋ Нове надходження':'＋ Нова витрата';
@@ -863,8 +875,45 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       $('#exp').innerHTML=sw+'<div class="panel"><div class="lab">Ще не повернено</div><div class="big">'+money(due)+'</div></div><div class="panel">'+its.map(function(i){return row(i,false)}).join('')+'</div>';
     }
   }
+  var AD_GROUPS=[
+    {name:'Окремі види реклами',items:[
+      ['Instagram: допис',620],['Instagram: сторіс',500],['Instagram: допис + сторіс',1000],['Instagram: закріплення допису на день',160],['Instagram: закріплення допису на тиждень',760],
+      ['Facebook: допис',540],['Facebook: сторіс',250],['Facebook: допис + сторіс',700],['Facebook: закріплення допису на день',160],['Facebook: закріплення допису на тиждень',760],
+      ['Telegram: допис',610],['Telegram: закріплення допису на день',160],['Telegram: закріплення допису на тиждень',760],['Telegram: репост у чатах Thebuchacity (від 395 грн)',395],
+      ['Сайт: рекламний допис',1500],['TikTok: рекламний допис',620]]},
+    {name:'Пакети реклами',items:[
+      ['Пакет «Мінімал»',1460,'допис Instagram, сторіс Instagram, допис Facebook'],
+      ['Пакет «Базовий»',1770,'допис і сторіс Instagram, допис і сторіс Facebook'],
+      ['Пакет «Стандарт»',2220,'допис і сторіс Instagram, допис і сторіс Facebook, допис Telegram'],
+      ['Пакет «Платинум»',5000,'2 дописи і 2 сторіс Instagram, 2 дописи і 2 сторіс Facebook, допис Telegram, сайт']]},
+    {name:'Рекламні пакети (стаття)',items:[
+      ['Стаття «Базовий»',3000,'написання статті, публікація на сайті'],
+      ['Стаття «Стандарт»',5000,'стаття, сайт, поширення в соцмережах і чатах'],
+      ['Стаття «Платинум»',8000,'стаття, відео з адаптацією під соцмережі, сайт, поширення в соцмережах і чатах']]}
+  ];
+  var AD_FLAT=[];AD_GROUPS.forEach(function(g){g.items.forEach(function(it){AD_FLAT.push({title:it[0],amount:it[1],group:g.name})})});
+  var ADSEL={};
+  function adUpdate(){
+    var s=0,c=0;Object.keys(ADSEL).forEach(function(k){s+=AD_FLAT[k].amount;c++});
+    var sum=$('#ad-sum'); if(sum) sum.textContent=money(s)+(c?' · '+c+' шт.':'');
+    var ok=$('#f-ok'); if(ok) ok.disabled=!c;
+  }
+  function adForm(){
+    ADSEL={};var n=0,html='';
+    AD_GROUPS.forEach(function(g){
+      html+='<div class="adgrp">'+esc(g.name)+'</div>';
+      g.items.forEach(function(it){
+        html+='<button type="button" class="adrow" data-adi="'+n+'" aria-pressed="false"><span class="adck"></span><span class="adt">'+esc(it[0])+(it[2]?'<small>'+esc(it[2])+'</small>':'')+'</span><span class="ada">'+esc(money(it[1]))+'</span></button>';
+        n++;
+      });
+    });
+    openSheet('<h3>Надходження від реклами</h3><p class="hint">Оберіть усе, що було оплачено, і натисніть «Записати».</p>'+html+
+      '<div class="adsum"><span>Разом</span><b id="ad-sum">0 грн</b></div><p class="err" id="f-err" hidden></p>'+
+      '<div class="acts"><button class="btn pri" id="f-ok" data-adsave="1" disabled>Записати надходження</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
+  }
   function expForm(){
     var inc=EXPK==='inc';
+    if(inc){adForm();return}
     openSheet('<h3>'+(inc?'Нове надходження':'Нова витрата')+'</h3>'+
       '<div class="fld"><label for="f-title">'+(inc?'За що':'На що')+'</label><input id="f-title" type="text" maxlength="200" placeholder="Наприклад, оренда студії"></div>'+
       '<div class="fld"><label for="f-amt">Сума, грн</label><input id="f-amt" type="text" inputmode="decimal" placeholder="1500"></div>'+
@@ -1073,6 +1122,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       b.disabled=true;wkPost('/api/work',{project:pp.dataset.wp,type:tt2.dataset.wt,title:$('#f-title').value.trim(),date:$('#f-date').value});}
     else if(b.dataset.wkdel){if(b.dataset.confirm==='1'){wkPost('/api/work/delete',{id:b.dataset.wkdel})}else{b.dataset.confirm='1';b.textContent='Точно? Ще раз';}}
     else if(b.dataset.exnew){expForm();}
+    else if(b.dataset.adi!==undefined){var ai=+b.dataset.adi,on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on?'true':'false');if(on)ADSEL[ai]=1;else delete ADSEL[ai];adUpdate();}
+    else if(b.dataset.adsave!==undefined){var its=Object.keys(ADSEL).map(function(k){return {title:AD_FLAT[k].title,amount:AD_FLAT[k].amount}});if(!its.length)return;b.disabled=true;expPost('/api/expense',{kind:'надходження',items:its});}
     else if(b.dataset.exsave){var tt=$('#f-title').value.trim(),am=$('#f-amt').value.trim();var fe2=$('#f-err');
       if(!tt||!am){fe2.textContent='Заповніть назву й суму.';fe2.hidden=false;return}
       b.disabled=true;expPost('/api/expense',{title:tt,amount:am,kind:EXPK==='inc'?'надходження':''});}
