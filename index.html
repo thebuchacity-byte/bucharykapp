@@ -893,8 +893,14 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   ];
   var AD_FLAT=[];AD_GROUPS.forEach(function(g){g.items.forEach(function(it){AD_FLAT.push({title:it[0],amount:it[1],group:g.name})})});
   var ADSEL={};
+  function adManual(){
+    var t=($('#f-title')||{}).value||'', a=($('#f-amt')||{}).value||'';
+    var amt=parseFloat(String(a).replace(',','.').replace(/\s/g,''));
+    return {title:t.trim(), amount:amt, ok:!!t.trim()&&amt>0, any:!!t.trim()||!!String(a).trim()};
+  }
   function adUpdate(){
     var s=0,c=0;Object.keys(ADSEL).forEach(function(k){s+=AD_FLAT[k].amount;c++});
+    var m=adManual(); if(m.ok){s+=m.amount;c++}
     var sum=$('#ad-sum'); if(sum) sum.textContent=money(s)+(c?' · '+c+' шт.':'');
     var ok=$('#f-ok'); if(ok) ok.disabled=!c;
   }
@@ -907,9 +913,14 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         n++;
       });
     });
-    openSheet('<h3>Надходження від реклами</h3><p class="hint">Оберіть усе, що було оплачено, і натисніть «Записати».</p>'+html+
+    openSheet('<h3>Надходження</h3>'+
+      '<div class="lab" style="margin:4px 0 8px">Внести вручну</div>'+
+      '<div class="fld"><label for="f-title">За що</label><input id="f-title" type="text" maxlength="200" placeholder="Наприклад, Instagram: допис для «Суботніх фоток»"></div>'+
+      '<div class="fld"><label for="f-amt">Сума, грн</label><input id="f-amt" type="text" inputmode="decimal" placeholder="1500"></div>'+
+      '<div class="lab" style="margin:16px 0 0">Або оберіть зі списку реклами</div>'+html+
       '<div class="adsum"><span>Разом</span><b id="ad-sum">0 грн</b></div><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-adsave="1" disabled>Записати надходження</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
+    $('#f-title').oninput=adUpdate; $('#f-amt').oninput=adUpdate;
   }
   function expForm(){
     var inc=EXPK==='inc';
@@ -1123,7 +1134,14 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     else if(b.dataset.wkdel){if(b.dataset.confirm==='1'){wkPost('/api/work/delete',{id:b.dataset.wkdel})}else{b.dataset.confirm='1';b.textContent='Точно? Ще раз';}}
     else if(b.dataset.exnew){expForm();}
     else if(b.dataset.adi!==undefined){var ai=+b.dataset.adi,on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on?'true':'false');if(on)ADSEL[ai]=1;else delete ADSEL[ai];adUpdate();}
-    else if(b.dataset.adsave!==undefined){var its=Object.keys(ADSEL).map(function(k){return {title:AD_FLAT[k].title,amount:AD_FLAT[k].amount}});if(!its.length)return;b.disabled=true;expPost('/api/expense',{kind:'надходження',items:its});}
+    else if(b.dataset.adsave!==undefined){
+      var its=Object.keys(ADSEL).map(function(k){return {title:AD_FLAT[k].title,amount:AD_FLAT[k].amount,ad:true}});
+      var m=adManual(), fe3=$('#f-err');
+      if(m.any&&!m.ok){fe3.textContent='Для ручного запису вкажіть і «За що», і суму.';fe3.hidden=false;return}
+      if(m.ok) its.unshift({title:m.title,amount:m.amount});
+      if(!its.length)return;
+      b.disabled=true;expPost('/api/expense',{kind:'надходження',items:its});
+    }
     else if(b.dataset.exsave){var tt=$('#f-title').value.trim(),am=$('#f-amt').value.trim();var fe2=$('#f-err');
       if(!tt||!am){fe2.textContent='Заповніть назву й суму.';fe2.hidden=false;return}
       b.disabled=true;expPost('/api/expense',{title:tt,amount:am,kind:EXPK==='inc'?'надходження':''});}
