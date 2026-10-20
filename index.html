@@ -171,6 +171,15 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
 .gchips{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:45%}
 .gchips i{font-style:normal;font-size:11px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
 .gchips i.none{background:var(--line);color:var(--muted)}
+:root{--m1:#5CBF86;--m2:#FF8A00;--m3:#6FA8DC;--m4:#E3B04B}
+.gstack{display:flex}
+.gstack i{height:100%;display:block;border-radius:0}
+.glegend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:12px;color:var(--muted)}
+.glegend span{display:flex;align-items:center;gap:6px}
+.glegend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.mschips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.mdl{margin:6px 0 0;padding-left:18px;font-size:14px}
+.mdl li{margin:6px 0}
 </style>
 </head><body><div id="app">
   <header>
@@ -619,7 +628,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       if(o){s.value=o.value;adToggle();ntSet()}
     });
   }
-  var GR={open:''};
+  var GR={open:'',ms:{}};
   function grantsShow(force){
     api('/api/grants'+(force?'?refresh=1':'')).then(function(r){
       D.grants=r.grants||[]; D.grantsRegistry=r.registry||''; D.grantsUpdated=r.updated||'';
@@ -628,6 +637,11 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   }
   function gcls(p){return p>=100?'ok':'run'}
   function gbar(p){return '<div class="gbar"><i class="'+(p>=100?'ok':'')+'" style="width:'+Math.max(0,Math.min(100,p))+'%"></i></div>'}
+  function gstack(ms,tot){
+    var h='<div class="gbar gstack">';
+    ms.forEach(function(m){var d=0;m.items.forEach(function(i){if(i.done!=null)d+=Math.min(i.done,i.target)});if(d)h+='<i style="width:'+(d/tot*100)+'%;background:var(--m'+m.no+')"></i>'});
+    return h+'</div>';
+  }
   function grantsRender(){
     var list=D.grants||[];
     say('grants','');
@@ -636,20 +650,42 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       (D.grantsRegistry?'<a class="hint" href="'+esc(D.grantsRegistry)+'" target="_blank" rel="noopener">Реєстр грантів (Google Sheet)</a>':'')+'</div>';
     if(!list.length){ $('#grants').innerHTML=h+'<p class="note">Активних грантів поки немає.</p>'; return; }
     list.forEach(function(g){
-      var open=GR.open===g.id, ms=g.milestones||[], fact=0, tgt=0, has=false;
-      ms.forEach(function(m){ tgt+=m.target; if(m.done!=null){has=true;fact+=Math.min(m.done,m.target)} });
+      var open=GR.open===g.id, ms=g.ms||[], sel=GR.ms[g.id]||0;
+      var fact=0,tgt=0,has=false;
+      (g.milestones||[]).forEach(function(m){tgt+=m.target;if(m.done!=null){has=true;fact+=Math.min(m.done,m.target)}});
       var pct=(has&&tgt)?Math.round(fact/tgt*100):null;
+      var tot=0; ms.forEach(function(m){m.items.forEach(function(i){tot+=i.target})});
+      var bar=(ms.length&&tot)?gstack(ms,tot):(pct!=null?gbar(pct):'');
       h+='<div class="panel gcard"><button class="gh" data-gr="'+esc(g.id)+'" aria-expanded="'+open+'">'+
          '<div class="gtop"><div><b>'+esc(g.name)+'</b><p class="hint">'+esc(g.id)+' · '+esc(g.donor)+' · '+esc(g.amount)+'</p></div>'+
-         (pct!=null?'<span class="gpct '+gcls(pct)+'">'+pct+'%</span>':'')+'</div>'+
-         (pct!=null?gbar(pct):'')+'</button>';
+         (pct!=null?'<span class="gpct '+gcls(pct)+'">'+pct+'%</span>':'')+'</div>'+bar+'</button>';
+      if(ms.length) h+='<div class="glegend">'+ms.map(function(m){return '<span><i style="background:var(--m'+m.no+')"></i>МС'+m.no+'</span>'}).join('')+'</div>';
       if(open){
-        h+='<div style="margin-top:12px"><p><b>Статус:</b> '+esc(g.status)+'</p>';
-        if(g.dates&&g.dates.length) h+='<p class="lab" style="margin-top:12px">Дати</p>'+g.dates.map(function(d){return '<p class="hint">'+esc(d.date)+' — '+esc(d.what)+'</p>'}).join('');
-        if(ms.length) h+='<p class="lab" style="margin-top:12px">Майлстоуни</p>'+ms.map(function(m){
-            var p=m.done!=null?Math.round(Math.min(m.done,m.target)/m.target*100):null;
-            return '<div class="gm"><div class="gml"><span>'+esc(m.name)+'</span><b>'+(m.done!=null?esc(m.done)+' / ':'')+esc(m.target)+'</b></div>'+(p!=null?gbar(p):'')+'</div>';
-          }).join('');
+        if(ms.length) h+='<div class="mschips"><button class="chip" aria-pressed="'+(sel===0)+'" data-gms="'+esc(g.id)+'|0">Усі</button>'+
+           ms.map(function(m){return '<button class="chip" aria-pressed="'+(sel===m.no)+'" data-gms="'+esc(g.id)+'|'+m.no+'">МС'+m.no+'</button>'}).join('')+'</div>';
+        h+='<div style="margin-top:12px">';
+        if(sel===0||!ms.length){
+          h+='<p><b>Статус:</b> '+esc(g.status)+'</p>';
+          if(g.dates&&g.dates.length) h+='<p class="lab" style="margin-top:12px">Дати</p>'+g.dates.map(function(d){return '<p class="hint">'+esc(d.date)+' — '+esc(d.what)+'</p>'}).join('');
+          if(g.milestones&&g.milestones.length) h+='<p class="lab" style="margin-top:12px">Усі майлстоуни</p>'+g.milestones.map(function(m){
+              var p=m.done!=null?Math.round(Math.min(m.done,m.target)/m.target*100):null;
+              return '<div class="gm"><div class="gml"><span>'+esc(m.name)+'</span><b>'+(m.done!=null?esc(m.done)+' з '+esc(m.target)+(p!=null?' · '+p+'%':''):'ціль '+esc(m.target))+'</b></div>'+(p!=null?gbar(p):'')+'</div>';
+            }).join('');
+        } else {
+          var mm=ms.filter(function(x){return x.no===sel})[0];
+          if(mm){
+            var mt=0,md=0,left=0;
+            h+='<p class="lab">МС'+mm.no+' · '+esc(mm.period)+'</p>';
+            mm.items.forEach(function(i){
+              var p=i.done!=null?Math.round(Math.min(i.done,i.target)/i.target*100):null;
+              if(i.done!=null){md+=Math.min(i.done,i.target);left+=Math.max(0,i.target-i.done)}
+              mt+=i.target;
+              h+='<div class="gm"><div class="gml"><span>'+esc(i.name)+'</span><b>'+(i.done!=null?esc(i.done)+' з '+esc(i.target)+' · '+p+'%':'вручну · ціль '+esc(i.target))+'</b></div>'+(p!=null?gbar(p):'')+'</div>';
+            });
+            h+='<p class="hint" style="margin-top:10px">Виконано '+(mt?Math.round(md/mt*100):0)+'% · не виконано: '+left+' з '+mt+'</p>';
+            h+='<p class="lab" style="margin-top:14px">Що здати</p><ul class="mdl">'+mm.deliver.map(function(d){return '<li>'+esc(d)+'</li>'}).join('')+'</ul>';
+          }
+        }
         if(g.youtube) h+='<p class="hint" style="margin-top:10px">Плейлист TBC REC: '+g.youtube.qualified+' повних опублікованих з міткою G-051 (у плейлисті '+g.youtube.total+', з міткою '+g.youtube.tagged+').</p>';
         if(g.articles&&g.articles.length) h+='<p class="lab" style="margin-top:14px">Матеріали з тегом G-051 ('+g.articles.length+')</p>'+g.articles.map(function(a){
             return '<a class="gart" href="'+esc(a.link)+'" target="_blank" rel="noopener"><span><b>'+esc(a.title)+'</b><small>'+esc(a.date)+'</small></span><span class="gchips">'+(a.types.length?a.types.map(function(x){return '<i>'+esc(x)+'</i>'}).join(''):'<i class="none">без типу</i>')+'</span></a>';
@@ -1137,6 +1173,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   document.addEventListener('click',function(ev){
     var b=ev.target.closest('button'); if(!b) return;
     if(b.dataset.v) show(b.dataset.v);
+    else if(b.dataset.gms){var gp=b.dataset.gms.split('|');GR.ms[gp[0]]=+gp[1];grantsRender();}
     else if(b.dataset.grrefresh){say('grants','Оновлюю…');grantsShow(true);}
     else if(b.dataset.gr){GR.open=GR.open===b.dataset.gr?'':b.dataset.gr;grantsRender();}
     else if(b.dataset.ckopen!==undefined){CK.open=b.dataset.ckopen;ckRender();window.scrollTo(0,0)}
