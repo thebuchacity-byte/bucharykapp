@@ -154,6 +154,23 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   .hm-time{font-family:ui-monospace,monospace;min-width:52px;font-weight:600}
   .hm-t{font-weight:600}
   .hm-sub{font-size:13px;opacity:.75;margin-top:2px;line-height:1.35}
+.gtop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.gtop h2{margin-bottom:4px}
+.gpct{font:600 15px var(--mono);white-space:nowrap;align-self:center}
+.gpct.ok{color:var(--good)} .gpct.run{color:var(--accent)}
+.gcard{margin-bottom:10px}
+.gh{display:block;width:100%;background:none;border:0;color:inherit;font:inherit;text-align:left;padding:0;cursor:pointer}
+.gbar{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:10px}
+.gbar i{display:block;height:100%;border-radius:999px;background:var(--accent);transition:width .4s}
+.gbar i.ok{background:var(--good)}
+.gm{margin-top:12px}
+.gml{display:flex;justify-content:space-between;font-size:14px}
+.gml b{font-family:var(--mono);font-weight:500}
+.gart{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line);color:var(--fg);text-decoration:none;font-size:14px}
+.gart small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.gchips{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:45%}
+.gchips i{font-style:normal;font-size:11px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.gchips i.none{background:var(--line);color:var(--muted)}
 </style>
 </head><body><div id="app">
   <header>
@@ -603,31 +620,44 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     });
   }
   var GR={open:''};
-  function grantsShow(){
-    api('/api/grants').then(function(r){
-      D.grants=r.grants||[]; D.grantsRegistry=r.registry||'';
+  function grantsShow(force){
+    api('/api/grants'+(force?'?refresh=1':'')).then(function(r){
+      D.grants=r.grants||[]; D.grantsRegistry=r.registry||''; D.grantsUpdated=r.updated||'';
       grantsRender();
     }).catch(function(){ $('#grants').innerHTML=''; say('grants','Гранти не завантажились. Спробуйте ще раз.'); });
   }
+  function gcls(p){return p>=100?'ok':'run'}
+  function gbar(p){return '<div class="gbar"><i class="'+(p>=100?'ok':'')+'" style="width:'+Math.max(0,Math.min(100,p))+'%"></i></div>'}
   function grantsRender(){
     var list=D.grants||[];
     say('grants','');
-    var h='<div class="panel"><h2>Активні гранти</h2><p class="hint">Натисніть на грант, щоб побачити деталі.</p>'+
+    var h='<div class="panel"><div class="gtop"><div><h2>Гранти</h2><p class="hint">Прогрес по майлстоунах: факти з сайту та YouTube.</p></div><button class="btn" data-grrefresh="1">Оновити</button></div>'+
+      (D.grantsUpdated?'<p class="hint">Оновлено '+esc(D.grantsUpdated)+'</p>':'')+
       (D.grantsRegistry?'<a class="hint" href="'+esc(D.grantsRegistry)+'" target="_blank" rel="noopener">Реєстр грантів (Google Sheet)</a>':'')+'</div>';
     if(!list.length){ $('#grants').innerHTML=h+'<p class="note">Активних грантів поки немає.</p>'; return; }
     list.forEach(function(g){
-      var open=GR.open===g.id;
-      h+='<button class="panel" data-gr="'+esc(g.id)+'" aria-expanded="'+open+'" style="display:block;width:100%;text-align:left;margin-bottom:10px">'+
-         '<b>'+esc(g.name)+'</b><p class="hint">'+esc(g.id)+' · '+esc(g.donor)+' · '+esc(g.amount)+'</p>';
+      var open=GR.open===g.id, ms=g.milestones||[], fact=0, tgt=0, has=false;
+      ms.forEach(function(m){ tgt+=m.target; if(m.done!=null){has=true;fact+=Math.min(m.done,m.target)} });
+      var pct=(has&&tgt)?Math.round(fact/tgt*100):null;
+      h+='<div class="panel gcard"><button class="gh" data-gr="'+esc(g.id)+'" aria-expanded="'+open+'">'+
+         '<div class="gtop"><div><b>'+esc(g.name)+'</b><p class="hint">'+esc(g.id)+' · '+esc(g.donor)+' · '+esc(g.amount)+'</p></div>'+
+         (pct!=null?'<span class="gpct '+gcls(pct)+'">'+pct+'%</span>':'')+'</div>'+
+         (pct!=null?gbar(pct):'')+'</button>';
       if(open){
-        h+='<div style="margin-top:10px"><p><b>Статус:</b> '+esc(g.status)+'</p><p><b>Сума:</b> '+esc(g.amount)+'</p>';
-        if(g.dates&&g.dates.length) h+='<p><b>Дати:</b></p>'+g.dates.map(function(d){return '<p class="hint">'+esc(d.date)+' — '+esc(d.what)+'</p>'}).join('');
-        if(g.youtube) h+='<p class="hint">Подкасти з плейлиста TBC REC: '+g.youtube.qualified+' повних опублікованих з міткою G-051 (у плейлисті '+g.youtube.total+' відео, з міткою '+g.youtube.tagged+').</p>';
-        if(g.milestones&&g.milestones.length) h+='<p><b>Майлстоуни (факт / ціль):</b></p>'+g.milestones.map(function(m){return '<p class="hint">'+esc(m.name)+': '+(m.done!=null?esc(m.done)+' / ':'')+esc(m.target)+'</p>'}).join('');
-        if(g.note) h+='<p class="hint">'+esc(g.note)+'</p>';
+        h+='<div style="margin-top:12px"><p><b>Статус:</b> '+esc(g.status)+'</p>';
+        if(g.dates&&g.dates.length) h+='<p class="lab" style="margin-top:12px">Дати</p>'+g.dates.map(function(d){return '<p class="hint">'+esc(d.date)+' — '+esc(d.what)+'</p>'}).join('');
+        if(ms.length) h+='<p class="lab" style="margin-top:12px">Майлстоуни</p>'+ms.map(function(m){
+            var p=m.done!=null?Math.round(Math.min(m.done,m.target)/m.target*100):null;
+            return '<div class="gm"><div class="gml"><span>'+esc(m.name)+'</span><b>'+(m.done!=null?esc(m.done)+' / ':'')+esc(m.target)+'</b></div>'+(p!=null?gbar(p):'')+'</div>';
+          }).join('');
+        if(g.youtube) h+='<p class="hint" style="margin-top:10px">Плейлист TBC REC: '+g.youtube.qualified+' повних опублікованих з міткою G-051 (у плейлисті '+g.youtube.total+', з міткою '+g.youtube.tagged+').</p>';
+        if(g.articles&&g.articles.length) h+='<p class="lab" style="margin-top:14px">Матеріали з тегом G-051 ('+g.articles.length+')</p>'+g.articles.map(function(a){
+            return '<a class="gart" href="'+esc(a.link)+'" target="_blank" rel="noopener"><span><b>'+esc(a.title)+'</b><small>'+esc(a.date)+'</small></span><span class="gchips">'+(a.types.length?a.types.map(function(x){return '<i>'+esc(x)+'</i>'}).join(''):'<i class="none">без типу</i>')+'</span></a>';
+          }).join('');
+        if(g.note) h+='<p class="hint" style="margin-top:10px">'+esc(g.note)+'</p>';
         h+='</div>';
       }
-      h+='</button>';
+      h+='</div>';
     });
     $('#grants').innerHTML=h;
   }
@@ -855,14 +885,14 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     its=all.filter(function(i){return inc?i.kind==='надходження':i.kind!=='надходження'});
     $('#add-exp').hidden=false;
     $('#add-exp').textContent=inc?'＋ Нове надходження':'＋ Нова витрата';
-    if(E.owner){bar=filtBar('exp',its);its=filtApply('exp',its)}
-    if(inc&&!E.owner){$('#exp').innerHTML=sw+'<p class="note">Надходження бачить лише власник. Нові можна додавати кнопкою нижче.</p>';return}
+    if(E.owner||E.archive){bar=filtBar('exp',its);its=filtApply('exp',its)}
+    if(inc&&!E.owner&&!E.archive){$('#exp').innerHTML=sw+'<p class="note">Надходження бачить лише власник. Нові можна додавати кнопкою нижче.</p>';return}
     if(inc){
       var kinds={'':'Усі','ad':'Реклама','shop':'Мерч (ШОП)','other':'Інше'};
       var kb='<div class="chips" style="margin-bottom:10px">'+Object.keys(kinds).map(function(k){return '<button class="chip" data-fk="'+k+'" aria-pressed="'+(EXPKIND===k)+'">'+kinds[k]+'</button>'}).join('')+'</div>';
       if(EXPKIND) its=its.filter(function(i){return incKind(i)===EXPKIND});
       var sumI=0;its.forEach(function(i){sumI+=i.amount});
-      $('#exp').innerHTML=sw+bar+kb+'<div class="panel"><div class="lab">Надійшло за вибором</div><div class="big">'+money(sumI)+'</div></div><div class="panel">'+(its.length?its.map(function(i){return '<div class="pt"><div><b>'+esc(i.title)+'</b><p>'+esc(fmtD(i.date))+(E.owner&&i.name?' · '+esc(i.name):'')+'</p></div><div style="text-align:right;white-space:nowrap"><b>'+money(i.amount)+'</b><br><button class="btn" style="margin-top:6px;padding:4px 10px;font-size:12px" data-expdel="'+esc(i.id)+'">Видалити</button></div></div>'}).join(''):'<p class="note">Надходжень поки немає.</p>')+'</div>';
+      $('#exp').innerHTML=sw+bar+kb+'<div class="panel"><div class="lab">Надійшло за вибором</div><div class="big">'+money(sumI)+'</div></div><div class="panel">'+(its.length?its.map(function(i){return '<div class="pt"><div><b>'+esc(i.title)+'</b><p>'+esc(fmtD(i.date))+((E.owner||E.archive)&&i.name?' · '+esc(i.name):'')+'</p></div><div style="text-align:right;white-space:nowrap"><b>'+money(i.amount)+'</b><br><button class="btn" style="margin-top:6px;padding:4px 10px;font-size:12px" data-expdel="'+esc(i.id)+'">Видалити</button></div></div>'}).join(''):'<p class="note">Надходжень поки немає.</p>')+'</div>';
       return;
     }
     if(!its.length){$('#exp').innerHTML=sw+bar+'<p class="note">'+(E.owner&&all.length?'За цим вибором витрат немає.':'Витрат поки немає.')+'</p>';return}
@@ -1107,6 +1137,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   document.addEventListener('click',function(ev){
     var b=ev.target.closest('button'); if(!b) return;
     if(b.dataset.v) show(b.dataset.v);
+    else if(b.dataset.grrefresh){say('grants','Оновлюю…');grantsShow(true);}
     else if(b.dataset.gr){GR.open=GR.open===b.dataset.gr?'':b.dataset.gr;grantsRender();}
     else if(b.dataset.ckopen!==undefined){CK.open=b.dataset.ckopen;ckRender();window.scrollTo(0,0)}
     else if(b.dataset.ckback!==undefined){CK.open='';ckRender();window.scrollTo(0,0)}
