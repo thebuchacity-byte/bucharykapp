@@ -687,7 +687,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
           }
         }
         if(g.youtube) h+='<p class="hint" style="margin-top:10px">Плейлист TBC REC: '+g.youtube.qualified+' повних опублікованих з міткою G-051 (у плейлисті '+g.youtube.total+', з міткою '+g.youtube.tagged+').</p>';
-        if(g.articles&&g.articles.length) h+='<p class="lab" style="margin-top:14px">Матеріали з тегом G-051 ('+g.articles.length+')</p>'+g.articles.map(function(a){
+        /* список матеріалів приховано */
+        if(false&&g.articles&&g.articles.length) h+='<p class="lab" style="margin-top:14px">Матеріали з тегом G-051 ('+g.articles.length+')</p>'+g.articles.map(function(a){
             return '<a class="gart" href="'+esc(a.link)+'" target="_blank" rel="noopener"><span><b>'+esc(a.title)+'</b><small>'+esc(a.date)+'</small></span><span class="gchips">'+(a.types.length?a.types.map(function(x){return '<i>'+esc(x)+'</i>'}).join(''):'<i class="none">без типу</i>')+'</span></a>';
           }).join('');
         if(g.note) h+='<p class="hint" style="margin-top:10px">'+esc(g.note)+'</p>';
