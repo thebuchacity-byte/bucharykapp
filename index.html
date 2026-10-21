@@ -636,7 +636,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     }).catch(function(){ $('#grants').innerHTML=''; say('grants','Гранти не завантажились. Спробуйте ще раз.'); });
   }
   function gcls(p){return p>=100?'ok':'run'}
-  function gbar(p){return '<div class="gbar"><i class="'+(p>=100?'ok':'')+'" style="width:'+Math.max(0,Math.min(100,p))+'%"></i></div>'}
+  function gbar(p,gr){return '<div class="gbar"><i class="'+(p>=100||gr?'ok':'')+'" style="width:'+Math.max(0,Math.min(100,p))+'%"></i></div>'}
   function gstack(ms,tot){
     var h='<div class="gbar gstack">';
     ms.forEach(function(m){var d=0;m.items.forEach(function(i){if(i.done!=null)d+=Math.min(i.done,i.target)});if(d)h+='<i style="width:'+(d/tot*100)+'%;background:var(--m'+m.no+')"></i>'});
@@ -652,7 +652,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     list.forEach(function(g){
       var open=GR.open===g.id, ms=g.ms||[], sel=GR.ms[g.id]||0;
       var fact=0,tgt=0,has=false;
-      (g.milestones||[]).forEach(function(m){tgt+=m.target;if(m.done!=null){has=true;fact+=Math.min(m.done,m.target)}});
+      (g.milestones||[]).forEach(function(m){if(m.done!=null){has=true;tgt+=m.target;fact+=Math.min(m.done,m.target)}});
       var pct=(has&&tgt)?Math.round(fact/tgt*100):null;
       var tot=0; ms.forEach(function(m){m.items.forEach(function(i){tot+=i.target})});
       var bar=(ms.length&&tot)?gstack(ms,tot):(pct!=null?gbar(pct):'');
@@ -669,7 +669,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
           if(g.dates&&g.dates.length) h+='<p class="lab" style="margin-top:12px">Дати</p>'+g.dates.map(function(d){return '<p class="hint">'+esc(d.date)+' — '+esc(d.what)+'</p>'}).join('');
           if(g.milestones&&g.milestones.length) h+='<p class="lab" style="margin-top:12px">Усі майлстоуни</p>'+g.milestones.map(function(m){
               var p=m.done!=null?Math.round(Math.min(m.done,m.target)/m.target*100):null;
-              return '<div class="gm"><div class="gml"><span>'+esc(m.name)+'</span><b>'+(m.done!=null?esc(m.done)+' з '+esc(m.target)+(p!=null?' · '+p+'%':''):'ціль '+esc(m.target))+'</b></div>'+(p!=null?gbar(p):'')+'</div>';
+              return '<div class="gm"><div class="gml"><span>'+esc(m.name)+'</span><b>'+(m.done!=null?esc(m.done)+' з '+esc(m.target)+(p!=null?' · '+p+'%':''):'ціль '+esc(m.target))+'</b></div>'+(p!=null?gbar(p,m.green):'')+'</div>';
             }).join('');
         } else {
           var mm=ms.filter(function(x){return x.no===sel})[0];
