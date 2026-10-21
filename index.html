@@ -671,6 +671,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
               var p=m.done!=null?Math.round(Math.min(m.done,m.target)/m.target*100):null;
               return '<div class="gm"><div class="gml"><span>'+esc(m.name)+'</span><b>'+(m.done!=null?esc(m.done)+' з '+esc(m.target)+(p!=null?' · '+p+'%':''):'ціль '+esc(m.target))+'</b></div>'+(p!=null?gbar(p,m.green):'')+'</div>';
             }).join('');
+          if(g.payments&&g.payments.length) h+='<p class="lab" style="margin-top:14px">Виплати (скільки разів оплачено)</p>'+g.payments.map(function(m){var p=Math.round(Math.min(m.done,m.target)/m.target*100);return '<div class="gm"><div class="gml"><span>'+esc(m.name)+'</span><b>'+esc(m.done)+' з '+esc(m.target)+' · '+p+'%</b></div>'+gbar(p)+'</div>'}).join('');
         } else {
           var mm=ms.filter(function(x){return x.no===sel})[0];
           if(mm){
