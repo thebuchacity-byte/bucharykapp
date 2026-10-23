@@ -1181,6 +1181,12 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       html+='<div class="hm-cd"><div class="hm-cd-l">До найближчої події</div><div class="hm-cd-n">'+left+'</div><div class="hm-sub">'+esc(ne.title)+' · '+esc(ne.project)+' · '+esc(ne.date)+', '+esc(ne.time)+'</div></div>';}
     if(h.saturday) html+='<div class="hm-sat">📸 Сьогодні субота — «Суботні фотки»! Кидайте в чат свої кадри з тижня.</div>';
     if(h.editor) html+=editorHtml(h.editor);
+    function hmTasks(title,list,who){
+      if(!list||!list.length) return '';
+      return '<h3 class="hm-h">'+title+'</h3>'+list.map(function(t){return '<div class="hm-card"><div class="hm-time">'+esc(t.deadline)+'</div><div><div class="hm-t">'+esc(t.title)+'</div><div class="hm-sub">'+esc(t.project)+' · '+esc(who(t))+' · '+esc(t.status)+'</div></div></div>'}).join('');
+    }
+    html+=hmTasks('Поставлені мені',h.tasks_to_me,function(t){return 'від '+t.by});
+    html+=hmTasks('Поставлені мною',h.tasks_by_me,function(t){return 'для '+t.assignee});
     html+='<h3 class="hm-h">Сьогодні заплановано</h3>';
     html+=(h.events&&h.events.length)?h.events.map(function(e){return '<div class="hm-card"><div class="hm-time">'+esc(e.time)+'</div><div><div class="hm-t">'+esc(e.title)+'</div><div class="hm-sub">'+esc(e.project)+(e.place?' · '+esc(e.place):'')+'</div></div></div>'}).join(''):'<p class="note">На сьогодні подій немає.</p>';
     box.innerHTML=html;
