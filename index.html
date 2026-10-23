@@ -378,7 +378,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     h+=list.map(function(k){return '<div class="day"><h2>'+fmtDay(k)+'</h2>'+by[k].map(evHtml).join('')+'</div>'}).join('');
     $('#cal').innerHTML=h;say('cal','');
   }
-  var SN={new:'Нова',work:'В роботі',reported:'Здана',done:'Готово'};
+  var SN={new:'Нова',work:'В роботі',check:'На перевірці',reported:'Здана',done:'Готово'};
   function tasks(){
     if(!$('#tasks')) return;
     var PR=['Усі'];D.tasks.forEach(function(t){if(PR.indexOf(t.project)<0)PR.push(t.project)});
@@ -392,6 +392,11 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       else if(t.mine&&t.status==='work'&&!t.event){
         acts=st.confirm===t.id?'<div class="acts"><span>Редактор отримає сповіщення.</span><button class="btn pri" data-act="done" data-id="'+esc(t.id)+'"'+dis+'>Так, виконано</button><button class="btn" data-act="no" data-id="'+esc(t.id)+'">Ні</button></div>'
           :'<div class="acts"><button class="btn" data-act="ask" data-id="'+esc(t.id)+'">Виконано</button></div>';}
+      if(t.status==='check'){
+        if(t.accept){acts='<div class="acts"><button class="btn pri" data-act="accept" data-id="'+esc(t.id)+'"'+dis+'>✅ Прийняти</button><button class="btn" data-act="retopen" data-id="'+esc(t.id)+'"'+dis+'>↩️ Повернути</button></div>'+
+          (st.ret===t.id?'<div class="fld"><label for="rc-'+esc(t.id)+'">Що доробити</label><input id="rc-'+esc(t.id)+'" type="text" maxlength="300" placeholder="Коротко, що виправити"></div><div class="acts"><button class="btn pri" data-act="retsend" data-id="'+esc(t.id)+'"'+dis+'>Надіслати</button></div>':'')}
+        else if(t.mine){acts='<p>Чекає на перевірку редакторки.</p>'}
+      }
       return '<div class="tk"><div style="min-width:0"><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>'+esc(t.assignee)+' · до '+fmtDue(t.deadline,t.due)+'</p>'+acts+'</div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join('');
   }
   var toastT;
@@ -403,9 +408,13 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function act(a,id){
     if(a==='ask'){st.confirm=id;tasks();return}
     if(a==='no'){st.confirm='';tasks();return}
+    if(a==='retopen'){st.ret=id;tasks();return}
+    var body={id:id,action:a};
+    if(a==='retsend'){var rc=document.getElementById('rc-'+id);body.action='return';body.comment=rc?rc.value.trim():'';st.ret=''}
+    var NS={take:'work',return:'work',done:'check'};
     st.confirm='';st.busy=id;tasks();
-    if(!LIVE){setTimeout(function(){st.busy='';setStatus(id,a==='take'?'work':'gone');tasks();toast('Тестові дані: нічого не надіслано.')},300);return}
-    fetch(API_BASE+'/api/task/status',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify({id:id,action:a})})
+    if(!LIVE){setTimeout(function(){st.busy='';setStatus(id,NS[body.action]||'gone');tasks();toast('Тестові дані: нічого не надіслано.')},300);return}
+    fetch(API_BASE+'/api/task/status',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify(body)})
       .then(function(r){return r.json()}).then(function(r){
         st.busy='';
         if(r.status) setStatus(id,r.status);
@@ -888,6 +897,9 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<div id="f-disc-box" hidden><div class="fld"><label for="f-disc">Скільки гривень знижки</label><input id="f-disc" type="text" inputmode="decimal" placeholder="0"></div><div class="chips">'+[50,100,200,300,500].map(function(v){return '<button type="button" class="chip" data-shdq="'+v+'" aria-pressed="false">'+v+' грн</button>'}).join('')+'</div></div>'+
       '<div class="fld"><label>Як продано</label><div class="chips" id="f-ch">'+
         [['cash','Готівка'],['bank','Банка'],['fop','ФОП'],['site','Сайт']].map(function(c){return '<button type="button" class="chip" data-shch="'+c[0]+'" aria-pressed="false">'+c[1]+'</button>'}).join('')+'</div></div>'+
+      '<div class="fld"><label>Отримання</label><div class="chips" id="f-dl">'+
+        '<button type="button" class="chip" data-shdl="Доставка" aria-pressed="false">Доставка</button>'+
+        '<button type="button" class="chip" data-shdl="Самовивіз" aria-pressed="false">Самовивіз (з сайту)</button></div></div>'+
       '<div class="fld"><label>Звідки продано</label><div class="chips" id="f-loc">'+
         '<button type="button" class="chip" data-shloc="office" aria-pressed="false">Офіс (є '+((it.stock||{}).office||0)+')</button>'+
         '<button type="button" class="chip" data-shloc="spekla" aria-pressed="false">Spekla (є '+((it.stock||{}).spekla||0)+')</button></div></div>'+
@@ -904,17 +916,18 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     var clv=(cl?cl.dataset.shcolor:'')||((document.getElementById('f-ccl')||{}).value||'').trim();
     var lc=document.querySelector('#f-loc [data-shloc][aria-pressed="true"]'); var locv=lc?lc.dataset.shloc:'';
     var chc=document.querySelector('#f-ch [data-shch][aria-pressed="true"]'); var chv=chc?chc.dataset.shch:'';
+    var dlc=document.querySelector('#f-dl [data-shdl][aria-pressed="true"]'); var dlv=dlc?dlc.dataset.shdl:'';
     var dbox=document.getElementById('f-disc-box'); var dsc=(dbox&&!dbox.hidden)?(document.getElementById('f-disc').value||''):'';
     if(!LIVE){closeSheet();toast('Тестові дані: нічого не збережено.');return}
     btn.disabled=true;
-    fetch(API_BASE+'/api/shop/sale',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify({product_id:id,qty:q,size:szv,color:clv,location:locv,channel:chv,discount:dsc})})
+    fetch(API_BASE+'/api/shop/sale',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify({product_id:id,qty:q,size:szv,color:clv,location:locv,channel:chv,discount:dsc,delivery:dlv})})
       .then(function(r){return r.json()}).then(function(r){
         if(!r.ok){fe.textContent=r.note||'Не вдалося.';fe.hidden=false;btn.disabled=false;return}
         closeSheet();toast(r.note||'Готово');
         return api('/api/shop').then(function(x){D.shop=x;shopRender()});
       }).catch(function(){fe.textContent='Не вдалося зберегти. Спробуйте ще раз.';fe.hidden=false;btn.disabled=false});
   }
-  var EXPK='exp', EXPKIND='';
+  var EXPK='exp', EXPKIND='', EXPSRC='';
   function incKind(i){var t=i.title||'';if(/^продано/i.test(t))return 'shop';if(/реклам/i.test(t))return 'ad';return 'other'}
   function exps(){
     var E=D.exp||{items:[],owner:false,income_ok:false},all=E.items||[],its,bar='',sw='';
@@ -998,9 +1011,13 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function expForm(){
     var inc=EXPK==='inc';
     if(inc){adForm();return}
+    EXPSRC='';
     openSheet('<h3>'+(inc?'Нове надходження':'Нова витрата')+'</h3>'+
       '<div class="fld"><label for="f-title">'+(inc?'За що':'На що')+'</label><input id="f-title" type="text" maxlength="200" placeholder="Наприклад, оренда студії"></div>'+
       '<div class="fld"><label for="f-amt">Сума, грн</label><input id="f-amt" type="text" inputmode="decimal" placeholder="1500"></div>'+
+      (inc?'':'<div class="fld"><span>Звідки оплачено</span><div class="acts" role="group" aria-label="Звідки оплачено">'+
+        '<button class="btn" type="button" aria-pressed="false" data-exsrc="Особисті кошти">Особисті кошти</button>'+
+        '<button class="btn" type="button" aria-pressed="false" data-exsrc="ФОП">ФОП</button></div></div>')+
       '<p class="hint">'+(inc?'Сума бачитиметься лише Остапі.':'Власник отримає сповіщення про цю витрату.')+'</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-exsave="1">Додати</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
   }
@@ -1218,13 +1235,16 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       if(!its.length)return;
       b.disabled=true;expPost('/api/expense',{kind:'надходження',items:its});
     }
+    else if(b.dataset.exsrc){EXPSRC=b.dataset.exsrc;document.querySelectorAll('[data-exsrc]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});}
     else if(b.dataset.exsave){var tt=$('#f-title').value.trim(),am=$('#f-amt').value.trim();var fe2=$('#f-err');
       if(!tt||!am){fe2.textContent='Заповніть назву й суму.';fe2.hidden=false;return}
-      b.disabled=true;expPost('/api/expense',{title:tt,amount:am,kind:EXPK==='inc'?'надходження':''});}
+      if(EXPK!=='inc'&&!EXPSRC){fe2.textContent='Оберіть, звідки оплачено: особисті кошти чи ФОП.';fe2.hidden=false;return}
+      b.disabled=true;expPost('/api/expense',{title:tt,amount:am,kind:EXPK==='inc'?'надходження':'',source:EXPK==='inc'?'':EXPSRC});}
     else if(b.dataset.ek){EXPK=b.dataset.ek;exps();}
     else if(b.dataset.quick){if(b.dataset.quick==='sale'){show('shop')}else if(b.dataset.quick==='income'){EXPK='inc';expForm()}else{adQuick()}}
     else if(b.dataset.sell){shopForm(b.dataset.sell);}
     else if(b.dataset.shsize){var gz=b.parentNode;gz.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b&&c.getAttribute('aria-pressed')!=='true'))})}
+    else if(b.dataset.shdl){var gd=b.parentNode;gd.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b&&c.getAttribute('aria-pressed')!=='true'))})}
     else if(b.dataset.shch){var gh=b.parentNode;gh.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b&&c.getAttribute('aria-pressed')!=='true'))})}
     else if(b.dataset.shloc){var gl=b.parentNode;gl.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b&&c.getAttribute('aria-pressed')!=='true'))})}
     else if(b.dataset.stock){stockForm()}
