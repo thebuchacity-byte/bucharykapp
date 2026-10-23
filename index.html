@@ -419,6 +419,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         st.busy='';
         if(r.status) setStatus(id,r.status);
         tasks();toast(r.note||'Готово');
+        api('/api/team').then(function(x){D.team=x.members;team()}).catch(function(){});
       }).catch(function(){st.busy='';tasks();toast('Не вдалося зберегти. Спробуйте ще раз.')});
   }
   var FORM=null;
@@ -608,13 +609,21 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     im.onerror=function(){fromApi(id,el)};
     im.src=u;
   }
+  function teamActs(t){
+    if(!t.manage) return '';
+    var id=esc(t.id), b='';
+    if(t.status==='check') b+='<button class="btn pri" data-act="accept" data-id="'+id+'">✅ Прийняти</button>';
+    else if(!t.event&&(t.status==='new'||t.status==='work')) b+='<button class="btn" data-act="done" data-id="'+id+'">Виконано</button>';
+    b+='<button class="btn" style="color:#C8323C" data-act="cancel" data-id="'+id+'">Скасувати</button>';
+    return '<div class="acts">'+b+'</div>';
+  }
   function team(){
     if(!D.team.length){$('#team').innerHTML='';say('team','Список команди порожній.');return}
     say('team','');
     $('#team').innerHTML=D.team.map(function(m){
       var open=st.open===String(m.id), ev=m.events||[], n=m.tasks.length, ne=ev.length;
       var evh=ne?'<p class="hint" style="padding-top:12px"><b>Зайнятий(а) на подіях</b></p>'+ev.map(function(e){return '<div class="pt"><div><b>'+esc(e.title)+'</b><span class="tag">'+esc(e.project)+'</span><p>'+fmtShort(e.date)+', '+esc(e.time)+(e.place?' · '+esc(e.place):'')+'</p></div></div>'}).join(''):'';
-      var body=open?'<div class="pbody">'+(n?m.tasks.map(function(t){return '<div class="pt"><div><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>до '+fmtDue(t.deadline,t.due)+'</p></div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join(''):'<p class="hint" style="padding-top:10px">Відкритих задач немає.</p>')+evh+'</div>':'';
+      var body=open?'<div class="pbody">'+(n?m.tasks.map(function(t){return '<div class="pt"><div><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>до '+fmtDue(t.deadline,t.due)+'</p></div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'+teamActs(t)}).join(''):'<p class="hint" style="padding-top:10px">Відкритих задач немає.</p>')+evh+'</div>':'';
       return '<div class="pcard"><button class="phead" data-tm="'+m.id+'" aria-expanded="'+open+'"><span class="av" data-av="'+m.id+'" data-nm="'+esc(m.name)+'">'+esc(initials(m.name))+'</span><span class="pinfo"><b>'+esc(m.name)+'</b><span>'+esc(m.position||'')+'</span></span><span class="cnt'+(n?' has':'')+'" title="Задачі">'+n+' з</span><span class="cnt'+(ne?' has':'')+'" title="Події">'+ne+' п</span></button>'+body+'</div>';
     }).join('');
     $$('#team .av').forEach(function(el){loadPhoto(el.dataset.av,el,el.dataset.nm)});
