@@ -397,7 +397,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
           (st.ret===t.id?'<div class="fld"><label for="rc-'+esc(t.id)+'">Що доробити</label><input id="rc-'+esc(t.id)+'" type="text" maxlength="300" placeholder="Коротко, що виправити"></div><div class="acts"><button class="btn pri" data-act="retsend" data-id="'+esc(t.id)+'"'+dis+'>Надіслати</button></div>':'')}
         else if(t.mine){acts='<p>Чекає на перевірку редакторки.</p>'}
       }
-      return '<div class="tk"><div style="min-width:0"><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>'+esc(t.assignee)+' · до '+fmtDue(t.deadline,t.due)+'</p>'+acts+'</div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join('');
+      return '<div class="tk"><div style="min-width:0"><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>'+esc(t.assignee)+' · до '+fmtDue(t.deadline,t.due)+'</p>'+descBlock(t)+acts+'</div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join('');
   }
   var toastT;
   function toast(t){var n=$('#toast');n.textContent=t;n.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){n.hidden=true},3500)}
@@ -615,6 +615,10 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     im.onerror=function(){fromApi(id,el)};
     im.src=u;
   }
+  function descBlock(t){
+    if(!t.desc) return '';
+    return '<details class="desc" style="margin-top:8px"><summary>Опис</summary><p style="white-space:pre-line;margin-top:6px">'+esc(t.desc)+'</p></details>';
+  }
   function teamActs(t){
     if(!t.manage) return '';
     var id=esc(t.id), b='';
@@ -629,7 +633,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     $('#team').innerHTML=D.team.map(function(m){
       var open=st.open===String(m.id), ev=m.events||[], n=m.tasks.length, ne=ev.length;
       var evh=ne?'<p class="hint" style="padding-top:12px"><b>Зайнятий(а) на подіях</b></p>'+ev.map(function(e){return '<div class="pt"><div><b>'+esc(e.title)+'</b><span class="tag">'+esc(e.project)+'</span><p>'+fmtShort(e.date)+', '+esc(e.time)+(e.place?' · '+esc(e.place):'')+'</p></div></div>'}).join(''):'';
-      var body=open?'<div class="pbody">'+(n?m.tasks.map(function(t){return '<div class="pt"><div><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>до '+fmtDue(t.deadline,t.due)+'</p></div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'+teamActs(t)}).join(''):'<p class="hint" style="padding-top:10px">Відкритих задач немає.</p>')+evh+'</div>':'';
+      var body=open?'<div class="pbody">'+(n?m.tasks.map(function(t){return '<div class="pt"><div><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>до '+fmtDue(t.deadline,t.due)+'</p></div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'+descBlock(t)+teamActs(t)}).join(''):'<p class="hint" style="padding-top:10px">Відкритих задач немає.</p>')+evh+'</div>':'';
       return '<div class="pcard"><button class="phead" data-tm="'+m.id+'" aria-expanded="'+open+'"><span class="av" data-av="'+m.id+'" data-nm="'+esc(m.name)+'">'+esc(initials(m.name))+'</span><span class="pinfo"><b>'+esc(m.name)+'</b><span>'+esc(m.position||'')+'</span></span><span class="cnt'+(n?' has':'')+'" title="Задачі">'+n+' з</span><span class="cnt'+(ne?' has':'')+'" title="Події">'+ne+' п</span></button>'+body+'</div>';
     }).join('');
     $$('#team .av').forEach(function(el){loadPhoto(el.dataset.av,el,el.dataset.nm)});
@@ -1183,7 +1187,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     if(h.editor) html+=editorHtml(h.editor);
     function hmTasks(title,list,who){
       if(!list||!list.length) return '';
-      return '<h3 class="hm-h">'+title+'</h3>'+list.map(function(t){return '<div class="hm-card"><div class="hm-time">'+esc(t.deadline)+'</div><div><div class="hm-t">'+esc(t.title)+'</div><div class="hm-sub">'+esc(t.project)+' · '+esc(who(t))+' · '+esc(t.status)+'</div></div></div>'}).join('');
+      return '<h3 class="hm-h">'+title+'</h3>'+list.map(function(t){return '<div class="hm-card"><div class="hm-time">'+esc(t.deadline)+'</div><div><div class="hm-t">'+esc(t.title)+'</div><div class="hm-sub">'+esc(t.project)+' · '+esc(who(t))+' · '+esc(t.status)+'</div>'+descBlock(t)+'</div></div>'}).join('');
     }
     html+=hmTasks('Поставлені мені',h.tasks_to_me,function(t){return 'від '+t.by});
     html+=hmTasks('Поставлені мною',h.tasks_by_me,function(t){return 'для '+t.assignee});
