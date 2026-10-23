@@ -531,9 +531,13 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     openSheet('<h3>Нова задача</h3>'+
       '<div class="fld"><label for="f-proj">Проєкт</label><select id="f-proj">'+opt('__free__','Без проєкту (будь-яка задача)')+ps.map(function(p){return opt(p.name,p.name)}).join('')+'</select></div>'+
       '<div class="fld"><label for="f-title">Що зробити</label><input id="f-title" type="text" maxlength="300" placeholder="Стаття про школу"></div>'+
+      '<div class="fld"><label for="f-desc">Опис (необов\'язково)</label><textarea id="f-desc" rows="4" maxlength="1000" placeholder="Кроки, деталі, посилання"></textarea></div>'+
       '<div class="fld"><label>Виконавці (можна кілька)</label><div class="chips" id="f-who"></div></div>'+
       '<div class="fld" id="f-when"></div>'+
       '<div class="fld" id="f-kindbox"><label for="f-kind">Чек-ліст (тип роботи)</label><select id="f-kind">'+opt('','Без чек-ліста')+(FORM.checklists||[]).map(function(c){return opt(c.key,c.name)}).join('')+'</select></div>'+
+      '<div class="fld" id="f-recbox"><label for="f-rec">Повторювати</label><select id="f-rec">'+opt('','Не повторювати')+opt('щодня','Щодня')+
+        opt('щотижня:пн','Щотижня: понеділок')+opt('щотижня:вт','Щотижня: вівторок')+opt('щотижня:ср','Щотижня: середа')+opt('щотижня:чт','Щотижня: четвер')+
+        opt('щотижня:пт','Щотижня: п\'ятниця')+opt('щотижня:сб','Щотижня: субота')+opt('щотижня:нд','Щотижня: неділя')+'</select></div>'+
       matBlock()+'<p class="hint">Кожен обраний отримає свою задачу й сповіщення в боті.</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-sub="task">Поставити задачу</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
     taskFields();
@@ -574,6 +578,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       if(!who.length){ferr('Оберіть хоча б одного виконавця.');return}
       body={project:p.name,title:title,assignee_ids:who};
       body.kind=($('#f-kind')&&!$('#f-kindbox').hidden)?$('#f-kind').value:'';
+      body.recur=($('#f-rec')&&!p.is_event)?$('#f-rec').value:'';
+      body.desc=($('#f-desc')&&$('#f-desc').value.trim())||'';
       if(p.is_event){body.event_id=$('#f-ev').value; if(!body.event_id){ferr('Спочатку додайте захід у календар.');return}}
       else{body.deadline=$('#f-dl').value; if(!body.deadline){ferr('Вкажіть дедлайн.');return} if($('#f-due').value) body.due_time=$('#f-due').value;}
       url='/api/task';
