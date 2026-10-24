@@ -775,6 +775,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       html+='<div class="fld"><label for="e-price">Ціна за шт., грн</label><input id="e-price" type="text" inputmode="decimal" value="'+esc(pn.toFixed(2).replace(/\.00$/,''))+'"></div>'+
         '<div class="fld"><label for="e-qty">Кількість</label><input id="e-qty" type="text" inputmode="numeric" value="'+esc(s.qty)+'"></div>'+
         '<div class="fld"><label for="e-disc">Знижка, грн</label><input id="e-disc" type="text" inputmode="decimal" value="'+esc(s.discount)+'"></div>'+
+        (((item.sizes||[]).length)?'<div class="fld"><label>Розмір</label><div class="chips" id="e-sz">'+(item.sizes||[]).map(function(z){return '<button type="button" class="chip" data-esz="'+esc(z)+'" aria-pressed="'+(z===s.size)+'">'+esc(z)+'</button>'}).join('')+'</div></div>':'')+
+        (((item.colors||[]).length)?'<div class="fld"><label>Колір</label><div class="chips" id="e-cl">'+(item.colors||[]).map(function(c){return '<button type="button" class="chip" data-ecl="'+esc(c)+'" aria-pressed="'+(c===s.color)+'">'+esc(c)+'</button>'}).join('')+'</div></div>':'')+
         '<div class="fld"><label>Як продано</label><div class="chips" id="e-pl">'+['Сайт','Спекла','Офіс','Виїзд','З рук'].map(function(p){return '<button type="button" class="chip" data-epl="'+p+'" aria-pressed="'+(p===s.place)+'">'+p+'</button>'}).join('')+'</div></div>'+
         '<div class="fld"><label>Оплата</label><div class="chips" id="e-ch">'+[['cash','Готівка'],['site','Сайт'],['fop','ФОП'],['bank','Банка'],['cod','Післяплата НП']].map(function(c){return '<button type="button" class="chip" data-ech="'+c[0]+'" aria-pressed="'+(c[1]===s.channel)+'">'+c[1]+'</button>'}).join('')+'</div></div>'+
         '<div class="fld"><label>Звідки товар</label><div class="chips" id="e-loc">'+[['office','Офіс'],['spekla','Spekla']].map(function(c){return '<button type="button" class="chip" data-eloc="'+c[0]+'" aria-pressed="'+(c[1]===s.location)+'">'+c[1]+'</button>'}).join('')+'</div></div>';
@@ -784,7 +786,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<div class="acts"><button class="btn pri" id="e-ok">'+(mode==='fix'?'Зберегти виправлення':'Скасувати продаж')+'</button><button class="btn" data-sub="cancel">Назад</button></div>';
     openSheet(html);
     function single(attr){document.querySelectorAll('#box ['+attr+']').forEach(function(c){c.addEventListener('click',function(){document.querySelectorAll('#box ['+attr+']').forEach(function(x){x.setAttribute('aria-pressed',x===c)})})})}
-    single('data-ech'); single('data-eloc'); single('data-epl');
+    single('data-ech'); single('data-eloc'); single('data-epl'); single('data-esz'); single('data-ecl');
     function ferrE(t){var e=document.getElementById('e-err');e.textContent=t;e.hidden=!t}
     document.getElementById('e-ok').addEventListener('click',function(){
       var reason=document.getElementById('e-reason').value.trim();
@@ -792,8 +794,9 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       var body={id:s.id,reason:reason};
       if(mode==='fix'){
         var chc=document.querySelector('#e-ch [data-ech][aria-pressed="true"]'), lc=document.querySelector('#e-loc [data-eloc][aria-pressed="true"]'), plc=document.querySelector('#e-pl [data-epl][aria-pressed="true"]');
-        if(!chc||!lc||!plc){ferrE('Оберіть, як продано, оплату і звідки товар.');return}
-        body.correct={product_id:item.id,price:document.getElementById('e-price').value.trim(),qty:document.getElementById('e-qty').value.trim()||'1',size:s.size,color:s.color,location:lc.dataset.eloc,place:plc.dataset.epl,channel:chc.dataset.ech,discount:document.getElementById('e-disc').value.trim()};
+        var szc=document.querySelector('#e-sz [data-esz][aria-pressed="true"]'), clc=document.querySelector('#e-cl [data-ecl][aria-pressed="true"]');
+        if(!chc||!lc||!plc||((item.sizes||[]).length&&!szc)||((item.colors||[]).length&&!clc)){ferrE('Оберіть розмір, колір, як продано, оплату і звідки товар.');return}
+        body.correct={product_id:item.id,price:document.getElementById('e-price').value.trim(),qty:document.getElementById('e-qty').value.trim()||'1',size:szc?szc.dataset.esz:s.size,color:clc?clc.dataset.ecl:s.color,location:lc.dataset.eloc,place:plc.dataset.epl,channel:chc.dataset.ech,discount:document.getElementById('e-disc').value.trim()};
       }
       if(!LIVE){closeSheet();toast('Тестові дані: нічого не збережено.');return}
       document.getElementById('e-ok').disabled=true;
