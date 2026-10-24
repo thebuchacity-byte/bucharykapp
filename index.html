@@ -1047,9 +1047,9 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     openSheet('<h3>'+(inc?'Нове надходження':'Нова витрата')+'</h3>'+
       '<div class="fld"><label for="f-title">'+(inc?'За що':'На що')+'</label><input id="f-title" type="text" maxlength="200" placeholder="Наприклад, оренда студії"></div>'+
       '<div class="fld"><label for="f-amt">Сума, грн</label><input id="f-amt" type="text" inputmode="decimal" placeholder="1500"></div>'+
-      (inc?'':'<div class="fld"><span>Звідки оплачено</span><div class="acts" role="group" aria-label="Звідки оплачено">'+
-        '<button class="btn" type="button" aria-pressed="false" data-exsrc="Особисті кошти">Особисті кошти</button>'+
-        '<button class="btn" type="button" aria-pressed="false" data-exsrc="ФОП">ФОП</button></div></div>')+
+      (inc?'':'<div class="fld"><span>Звідки оплачено</span><div class="chips" role="group" aria-label="Звідки оплачено">'+
+        '<button class="chip" type="button" aria-pressed="false" data-exsrc="Особисті кошти">Особисті кошти</button>'+
+        '<button class="chip" type="button" aria-pressed="false" data-exsrc="ФОП">ФОП</button></div></div>')+
       '<p class="hint">'+(inc?'Сума бачитиметься лише Остапі.':'Власник отримає сповіщення про цю витрату.')+'</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-exsave="1">Додати</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
   }
