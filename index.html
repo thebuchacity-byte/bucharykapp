@@ -537,10 +537,13 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<div class="fld" id="f-kindbox"><label for="f-kind">Чек-ліст (тип роботи)</label><select id="f-kind">'+opt('','Без чек-ліста')+(FORM.checklists||[]).map(function(c){return opt(c.key,c.name)}).join('')+'</select></div>'+
       '<div class="fld" id="f-recbox"><label for="f-rec">Повторювати</label><select id="f-rec">'+opt('','Не повторювати')+opt('щодня','Щодня')+
         opt('щотижня:пн','Щотижня: понеділок')+opt('щотижня:вт','Щотижня: вівторок')+opt('щотижня:ср','Щотижня: середа')+opt('щотижня:чт','Щотижня: четвер')+
-        opt('щотижня:пт','Щотижня: п\'ятниця')+opt('щотижня:сб','Щотижня: субота')+opt('щотижня:нд','Щотижня: неділя')+'</select></div>'+
+        opt('щотижня:пт','Щотижня: п\'ятниця')+opt('щотижня:сб','Щотижня: субота')+opt('щотижня:нд','Щотижня: неділя')+'</select>'+
+        '<div class="fld" id="f-untilbox" hidden><label for="f-until">До дати (необов\'язково)</label><input id="f-until" type="date"></div></div>'+
       matBlock()+'<p class="hint">Кожен обраний отримає свою задачу й сповіщення в боті.</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-sub="task">Поставити задачу</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
     taskFields();
+    var rsel=document.getElementById('f-rec');
+    if(rsel){rsel.addEventListener('change',function(){var ub=document.getElementById('f-untilbox');if(ub)ub.hidden=!rsel.value})}
     $('#f-proj').addEventListener('change',taskFields);
   }
   function openAdd(kind){
@@ -579,6 +582,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       body={project:p.name,title:title,assignee_ids:who};
       body.kind=($('#f-kind')&&!$('#f-kindbox').hidden)?$('#f-kind').value:'';
       body.recur=($('#f-rec')&&!p.is_event)?$('#f-rec').value:'';
+      if(body.recur&&$('#f-until')&&$('#f-until').value){body.recur+='|до:'+$('#f-until').value}
       body.desc=($('#f-desc')&&$('#f-desc').value.trim())||'';
       if(p.is_event){body.event_id=$('#f-ev').value; if(!body.event_id){ferr('Спочатку додайте захід у календар.');return}}
       else{body.deadline=$('#f-dl').value; if(!body.deadline){ferr('Вкажіть дедлайн.');return} if($('#f-due').value) body.due_time=$('#f-due').value;}
