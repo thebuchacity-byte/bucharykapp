@@ -624,12 +624,12 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     return '<details class="desc" style="margin-top:8px"><summary>Опис</summary><p style="white-space:pre-line;margin-top:6px">'+esc(t.desc)+'</p></details>';
   }
   function teamActs(t){
-    if(!t.manage) return '';
     var id=esc(t.id), b='';
-    if(t.status==='check') b+='<button class="btn pri" data-act="accept" data-id="'+id+'">✅ Прийняти</button>';
-    else if(!t.event&&(t.status==='new'||t.status==='work')) b+='<button class="btn" data-act="done" data-id="'+id+'">Виконано</button>';
-    b+='<button class="btn" style="color:#C8323C" data-act="cancel" data-id="'+id+'">Скасувати</button>';
-    return '<div class="acts">'+b+'</div>';
+    var active=!t.event&&(t.status==='new'||t.status==='work');
+    if(t.status==='check'&&t.manage) b+='<button class="btn pri" data-act="accept" data-id="'+id+'">✅ Прийняти</button>';
+    else if(active) b+='<button class="btn pri" data-act="done" data-id="'+id+'">Виконано</button>';
+    if(t.manage) b+='<button class="btn" style="color:#C8323C" data-act="cancel" data-id="'+id+'">Скасувати</button>';
+    return b?'<div class="acts">'+b+'</div>':'';
   }
   function team(){
     if(!D.team.length){$('#team').innerHTML='';say('team','Список команди порожній.');return}
@@ -1282,6 +1282,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     else if(b.dataset.quick){if(b.dataset.quick==='sale'){show('shop')}else if(b.dataset.quick==='income'){EXPK='inc';expForm()}else{adQuick()}}
     else if(b.dataset.sell){shopForm(b.dataset.sell);}
     else if(b.dataset.shsize){var gz=b.parentNode;gz.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b&&c.getAttribute('aria-pressed')!=='true'))})}
+    else if(b.dataset.shpl){var gp=b.parentNode;gp.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b&&c.getAttribute('aria-pressed')!=='true'))})}
     else if(b.dataset.shdl){var gd=b.parentNode;gd.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b&&c.getAttribute('aria-pressed')!=='true'))})}
     else if(b.dataset.shch){var gh=b.parentNode;gh.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b&&c.getAttribute('aria-pressed')!=='true'))})}
     else if(b.dataset.shloc){var gl=b.parentNode;gl.querySelectorAll('.chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b&&c.getAttribute('aria-pressed')!=='true'))})}
