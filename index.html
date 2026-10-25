@@ -389,7 +389,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     $('#tasks').innerHTML=D.tasks.filter(function(t){return st.proj==='Усі'||t.project===st.proj}).map(function(t){
       var acts='',dis=st.busy===t.id?' disabled':'';
       if(t.mine&&t.status==='new') acts='<div class="acts"><button class="btn pri" data-act="take" data-id="'+esc(t.id)+'"'+dis+'>Беру в роботу</button><button class="btn" data-act="decline" data-id="'+esc(t.id)+'"'+dis+'>Не можу</button></div>';
-      else if(t.mine&&t.status==='work'&&!t.event){
+      else if(t.mine&&t.status==='work'){
         acts=st.confirm===t.id?'<div class="acts"><span>Редактор отримає сповіщення.</span><button class="btn pri" data-act="done" data-id="'+esc(t.id)+'"'+dis+'>Так, виконано</button><button class="btn" data-act="no" data-id="'+esc(t.id)+'">Ні</button></div>'
           :'<div class="acts"><button class="btn" data-act="ask" data-id="'+esc(t.id)+'">Виконано</button></div>';}
       if(t.status==='check'){
@@ -625,7 +625,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   }
   function teamActs(t){
     var id=esc(t.id), b='';
-    var active=!t.event&&(t.status==='new'||t.status==='work');
+    var active=(t.status==='new'||t.status==='work');
     if(t.status==='check'&&t.manage) b+='<button class="btn pri" data-act="accept" data-id="'+id+'">✅ Прийняти</button>';
     else if(active) b+='<button class="btn pri" data-act="done" data-id="'+id+'">Виконано</button>';
     if(t.manage) b+='<button class="btn" style="color:#C8323C" data-act="cancel" data-id="'+id+'">Скасувати</button>';
