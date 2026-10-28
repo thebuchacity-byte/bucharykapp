@@ -466,7 +466,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<div class="fld"><label for="f-title">Що заплановано</label><input id="f-title" type="text" maxlength="200" placeholder="Зйомка зі спікеркою"></div>'+
       '<div class="fld" id="f-asgbox" hidden><label for="f-asg">Хто виконує (поставити задачу)</label><select id="f-asg"></select></div>'+
       '<div class="two"><div class="fld"><label for="f-date">Дата</label><input id="f-date" type="date" min="'+today()+'" value="'+today()+'"></div>'+
-      '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="12:00"></div></div>'+'<div class="fld"><label for="f-end">Кінець (необовʼязково)</label><input id="f-end" type="time"></div>'+
+      '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="12:00"></div></div>'+'<div class="fld"><label for="f-end">Кінець (необовʼязково)</label><input id="f-end" type="time"></div>'+'<div class="fld"><label for="f-edate">До дати (для довгої події, необовʼязково)</label><input id="f-edate" type="date" min="'+today()+'"></div>'+
       '<div class="fld" id="f-adbox" hidden><label>Де вийде реклама (можна кілька)</label><div class="chips" id="f-ap">'+AD_PLACES.map(function(x){return '<button type="button" class="chip" data-ap="'+esc(x)+'" aria-pressed="false">'+esc(x)+'</button>'}).join('')+'</div>'+
       '<div class="fld" style="margin-top:12px"><label for="f-amount">Вартість реклами, грн (необовʼязково)</label><input id="f-amount" type="text" inputmode="decimal" placeholder="1500"></div></div>'+
       '<div class="fld"><label for="f-place" id="f-place-l">Місце (необовʼязково)</label><input id="f-place" type="text" maxlength="200"></div>'+
@@ -565,13 +565,14 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       if(body.end_time&&body.end_time<=body.time){ferr('Кінець має бути пізніше за початок.');return}
       url='/api/meeting';
     }else if(kind==='event'){
-      body={project:$('#f-proj').value,title:title,date:$('#f-date').value,time:$('#f-time').value,place:$('#f-place').value.trim(),end_time:($('#f-end')||{}).value||''};
-      if(body.end_time&&body.end_time<=body.time){ferr('Кінець має бути пізніше за початок.');return}
+      body={project:$('#f-proj').value,title:title,date:$('#f-date').value,time:$('#f-time').value,place:$('#f-place').value.trim(),end_time:($('#f-end')||{}).value||'',end_date:($('#f-edate')||{}).value||''};
+      if(!body.end_date&&body.end_time&&body.end_time<=body.time){ferr('Кінець має бути пізніше за початок.');return}
       if(isAd(body.project)){var ap=Array.prototype.map.call(document.querySelectorAll('#f-ap [data-ap][aria-pressed="true"]'),function(x){return x.dataset.ap});
         if(!ap.length&&!body.place){ferr('Оберіть, де вийде реклама.');return}
         body.place=ap.concat(body.place?[body.place]:[]).join(', ');
         var amEl=$('#f-amount');body.amount=amEl?amEl.value.trim():''}
-      if(!body.date||!body.time){ferr('Вкажіть дату й час.');return}
+      if(!body.date||(!body.time&&!body.end_date)){ferr('Вкажіть дату й час (або дату «до» для довгої події).');return}
+      if(body.end_date&&body.end_date<body.date){ferr('Дата «до» не може бути раніше дати «з».');return}
       if((FORM.event_assignees||{})[body.project]){body.assignee_id=$('#f-asg').value||'none'}
       body.notify_ids=pickedIds('pp');
       url='/api/event';
