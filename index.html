@@ -1086,7 +1086,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     var W=D.wk||{items:[],viewer:false},its=W.items||[],bar='';
     if(W.viewer){bar=filtBar('wk',its);its=filtApply('wk',its)}
     if(!its.length){$('#wk').innerHTML=bar+'<p class="note">'+(W.viewer&&(W.items||[]).length?'За цим вибором робіт немає.':'Робіт поки не відмічено.')+'</p>';return}
-    function row(i){return '<div class="pt"><div><b>'+esc(i.type)+(i.title?': '+esc(i.title):'')+'</b><span class="tag" style="background:'+pcol(i.project)+'22;color:'+pcol(i.project)+'">'+esc(i.project)+'</span><p>'+fmtD(i.date)+'</p></div><div><button class="btn" style="padding:4px 10px;font-size:12px" data-wkdel="'+esc(i.id)+'">Видалити</button></div></div>'}
+    function row(i){return '<div class="pt"><div><b style="white-space:pre-wrap;word-break:break-word">'+esc(i.type)+(i.title?': '+esc(i.title):'')+'</b><span class="tag" style="background:'+pcol(i.project)+'22;color:'+pcol(i.project)+'">'+esc(i.project)+'</span><p>'+fmtD(i.date)+'</p></div><div><button class="btn" style="padding:4px 10px;font-size:12px" data-wkdel="'+esc(i.id)+'">Видалити</button></div></div>'}
     if(W.viewer){
       var by={},order=[];its.forEach(function(i){var k=i.uid||i.name;if(!by[k]){by[k]={name:i.name,items:[],cnt:{}};order.push(k)}by[k].items.push(i);by[k].cnt[i.type]=(by[k].cnt[i.type]||0)+1});
       order.sort(function(a,b){return by[b].items.length-by[a].items.length});
@@ -1103,7 +1103,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     openSheet('<h3>Зроблена робота</h3>'+
       '<div class="fld"><label>Проєкт</label><div class="chips" id="f-wp">'+chips(W.projects,'wp')+'</div></div>'+
       '<div class="fld"><label>Що зроблено</label><div class="chips" id="f-wt">'+chips(W.types,'wt')+'</div></div>'+
-      '<div class="fld"><label for="f-title">Назва (необовʼязково)</label><input id="f-title" type="text" maxlength="200" placeholder="Наприклад, репортаж із форуму"></div>'+
+      '<div class="fld"><label for="f-title">Опис (необовʼязково)</label><textarea id="f-title" rows="4" maxlength="500" placeholder="Що саме зроблено, наприклад: декорування та зйомка контенту на кінопоказ"></textarea></div>'+
       '<div class="fld"><label for="f-date">Дата, коли зроблено</label><input id="f-date" type="date" value="'+today()+'"></div>'+'<div class="fld"><label for="f-qty">Кількість</label><input id="f-qty" type="number" inputmode="numeric" min="1" max="50" value="1"></div>'+
       '<p class="hint">Сповіщення отримають лише власник і Остапа.</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-wksave="1">Відправити</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
