@@ -1098,6 +1098,19 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       $('#wk').innerHTML='<div class="panel">'+its.map(row).join('')+'</div>';
     }
   }
+  var XP_TOPICS=['Влада та громада','Освіта','Психологічна допомога','Ветерани та військові','Комунальні служби','Медицина','Бізнес і компанії','Юридична допомога','Релігія','Діти та родини','Культура і мистецтво','Поліція та безпека','Медіа та комунікації','Інше'];
+  function expertForm(){
+    openSheet('<h3>Новий експерт</h3>'+
+      '<div class="fld"><label for="x-topic">Тематика</label><select id="x-topic"><option value="">Оберіть зі списку…</option>'+XP_TOPICS.map(function(t){return '<option value="'+esc(t)+'">'+esc(t)+'</option>'}).join('')+'</select></div>'+
+      '<div class="fld"><label for="x-name">Імʼя та прізвище</label><input id="x-name" type="text" maxlength="120"></div>'+
+      '<div class="fld"><label for="x-pos">Посада / організація</label><input id="x-pos" type="text" maxlength="200"></div>'+
+      '<div class="two"><div class="fld"><label for="x-phone">Телефон</label><input id="x-phone" type="tel" maxlength="60" placeholder="+380…"></div>'+
+      '<div class="fld"><label for="x-email">Email</label><input id="x-email" type="email" maxlength="120"></div></div>'+
+      '<div class="fld"><label for="x-other">Інший контакт</label><input id="x-other" type="text" maxlength="200" placeholder="Telegram, Instagram, сайт тощо"></div>'+
+      '<div class="fld"><label for="x-comment">Коментар (чим допоможе)</label><textarea id="x-comment" rows="3" maxlength="300"></textarea></div>'+
+      '<p class="hint">Обовʼязкові: тематика, імʼя і хоча б один контакт.</p><p class="err" id="f-err" hidden></p>'+
+      '<div class="acts"><button class="btn pri" id="f-ok" data-xpsave="1">Зберегти</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
+  }
   function wkForm(){
     var W=D.wk||{projects:[],types:[]};
     if(!W.projects.length){toast('У вас немає проєктів для відмітки робіт.');return}
@@ -1210,6 +1223,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     html+=hmTasks('Поставлені мною',h.tasks_by_me,function(t){return 'для '+t.assignee});
     html+='<h3 class="hm-h">Сьогодні заплановано</h3>';
     html+=(h.events&&h.events.length)?h.events.map(function(e){return '<div class="hm-card"><div class="hm-time">'+esc(e.time)+'</div><div><div class="hm-t">'+esc(e.title)+'</div><div class="hm-sub">'+esc(e.project)+(e.place?' · '+esc(e.place):'')+'</div></div></div>'}).join(''):'<p class="note">На сьогодні подій немає.</p>';
+    html+='<button class="btn" style="width:100%;margin-top:14px" data-xpadd="1">＋ Додати експерта</button>';
     box.innerHTML=html;
     if(h.birthdays) h.birthdays.forEach(function(b,i){
       var el=$('#hm-bd'+i), sp=sitePhoto(b.name);
@@ -1268,6 +1282,10 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       b.disabled=true;wkPost('/api/work',{project:pp.dataset.wp,type:tt2.dataset.wt,title:$('#f-title').value.trim(),date:$('#f-date').value,qty:($('#f-qty')||{}).value||'1'});}
     else if(b.dataset.wkdel){if(b.dataset.confirm==='1'){wkPost('/api/work/delete',{id:b.dataset.wkdel})}else{b.dataset.confirm='1';b.textContent='Точно? Ще раз';}}
     else if(b.dataset.exnew){expForm();}
+    else if(b.dataset.xpadd){expertForm();}
+    else if(b.dataset.xpsave){var fe4=$('#f-err');var gv=function(id){var el=$(id);return el?el.value:''};
+      if(!gv('#x-topic')||!gv('#x-name').trim()){fe4.textContent='Оберіть тематику і вкажіть імʼя.';fe4.hidden=false;return}
+      b.disabled=true;wkPost('/api/expert',{topic:gv('#x-topic'),name:gv('#x-name').trim(),position:gv('#x-pos').trim(),phone:gv('#x-phone').trim(),email:gv('#x-email').trim(),other:gv('#x-other').trim(),comment:gv('#x-comment').trim()});}
     else if(b.dataset.adi!==undefined){var ai=+b.dataset.adi,on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on?'true':'false');if(on)ADSEL[ai]=1;else delete ADSEL[ai];adUpdate();}
     else if(b.dataset.adsave!==undefined){
       var its=Object.keys(ADSEL).map(function(k){return {title:AD_FLAT[k].title,amount:AD_FLAT[k].amount,ad:true}});
