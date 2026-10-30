@@ -372,7 +372,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       h+='<button data-cd="'+iso+'" aria-pressed="'+(st.csel===iso)+'" class="'+(iso===todayIso?'today':'')+'">'+d+'<span class="dots">'+dp.slice(0,4).map(function(p){return '<i style="background:'+pcol(p)+'"></i>'}).join('')+'</span></button>';
     }
     h+='</div>';
-    var list=Object.keys(by).filter(function(k){return k.indexOf(pre)===0&&(!st.csel||k===st.csel)}).sort();
+    var nowPre=now.getFullYear()+'-'+pad2(now.getMonth()+1)+'-';
+    var list=Object.keys(by).filter(function(k){return k.indexOf(pre)===0&&(st.csel?k===st.csel:(pre!==nowPre||k>=todayIso))}).sort();
     var total=0;list.forEach(function(k){total+=by[k].length});
     h+='<p class="hint">'+(st.csel?fmtDay(st.csel)+': '+(total?total+' '+(total===1?'подія':'подій'):'подій немає')+'. Натисни день ще раз, щоб побачити весь місяць.':'Усі плани місяця: '+total+'. Натисни день, щоб відфільтрувати.')+'</p>';
     h+=list.map(function(k){return '<div class="day"><h2>'+fmtDay(k)+'</h2>'+by[k].map(evHtml).join('')+'</div>'}).join('');
@@ -663,6 +664,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   }
   var GR={open:'',ms:{}};
   function grantsShow(force){
+    $('#grants').innerHTML='<p class="note">Завантажую гранти… перший раз може тривати до хвилини.</p>';
     api('/api/grants'+(force?'?refresh=1':'')).then(function(r){
       D.grants=r.grants||[]; D.grantsRegistry=r.registry||''; D.grantsUpdated=r.updated||'';
       grantsRender();
