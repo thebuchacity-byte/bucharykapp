@@ -494,9 +494,15 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       '<div class="fld"><label for="f-title">Назва</label><input id="f-title" type="text" maxlength="200" placeholder="Планерка по відео"></div>'+
       '<div class="two"><div class="fld"><label for="f-date">Дата</label><input id="f-date" type="date" min="'+today()+'" value="'+today()+'"></div>'+
       '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="'+hh+'"></div></div>'+'<div class="fld"><label for="f-end">Кінець (необовʼязково)</label><input id="f-end" type="time"></div>'+
+      '<div class="fld"><label for="f-rec">Повторювати</label><select id="f-rec">'+opt('','Не повторювати')+opt('щодня','Щодня')+
+        opt('щотижня:пн','Щотижня: понеділок')+opt('щотижня:вт','Щотижня: вівторок')+opt('щотижня:ср','Щотижня: середа')+opt('щотижня:чт','Щотижня: четвер')+
+        opt('щотижня:пт','Щотижня: пʼятниця')+opt('щотижня:сб','Щотижня: субота')+opt('щотижня:нд','Щотижня: неділя')+opt('щомісяця','Щомісяця: те саме число')+'</select></div>'+
+      '<div class="fld" id="f-untilbox" hidden><label for="f-until">До дати (необовʼязково, без дати — на рік)</label><input id="f-until" type="date" min="'+today()+'"></div>'+
       '<div class="fld"><label>З ким (можна кілька або всі)</label><div class="chips" id="f-pp">'+whoChips(FORM.people||[],'pp')+'</div></div>'+
       matBlock()+'<p class="hint">Усі обрані отримають у Telegram посилання на постійний Meet команди, а за 10 хвилин до початку ще й нагадування.</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-sub="meeting">Створити зустріч</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
+    var mrec=document.getElementById('f-rec');
+    if(mrec){mrec.addEventListener('change',function(){var ub=document.getElementById('f-untilbox');if(ub)ub.hidden=!mrec.value})}
   }
   function taskProj(){var n=$('#f-proj').value;
     if(n==='__free__')return {name:'__free__',is_event:false,members:(FORM.people||[]).map(function(m){return {id:m.id,name:m.name}})};
@@ -564,6 +570,9 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       body={title:title,date:$('#f-date').value,time:$('#f-time').value,participant_ids:pp,all:all,end_time:($('#f-end')||{}).value||''};
       if(!body.date||!body.time){ferr('Вкажіть дату й час.');return}
       if(body.end_time&&body.end_time<=body.time){ferr('Кінець має бути пізніше за початок.');return}
+      var mr=($('#f-rec')||{}).value||'';
+      if(mr==='щомісяця') mr='щомісяця:'+parseInt(body.date.slice(8),10);
+      if(mr){var mu=($('#f-until')||{}).value||'';body.recur=mr+(mu?'|до:'+mu:'')}
       url='/api/meeting';
     }else if(kind==='event'){
       body={project:$('#f-proj').value,title:title,date:$('#f-date').value,time:$('#f-time').value,place:$('#f-place').value.trim(),end_time:($('#f-end')||{}).value||'',end_date:($('#f-edate')||{}).value||''};
