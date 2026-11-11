@@ -401,10 +401,13 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       return '<div class="tk"><div style="min-width:0"><b>'+esc(t.title)+'</b><span class="tag">'+esc(t.project)+'</span><p>'+esc(t.assignee)+' · до '+fmtDue(t.deadline,t.due)+'</p>'+descBlock(t)+acts+'</div><span class="st '+esc(t.status)+'">'+(SN[t.status]||'')+'</span></div>'}).join('');
   }
   var toastT;
-  function remindSet(eid,date,mode){
+  function remindSet(eid,date,mode,btn){
     if(!LIVE){toast('Тестові дані: нічого не надіслано.');return}
     fetch(API_BASE+'/api/reminder',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify({event_id:eid,date:date,offsets:mode})})
-      .then(function(r){return r.json()}).then(function(r){toast(r.note||'Готово')})
+      .then(function(r){return r.json()}).then(function(r){
+        if(r.ok&&btn){btn.parentNode.querySelectorAll('[data-rm]').forEach(function(x){x.setAttribute('aria-pressed',String(x===btn))})}
+        toast(r.note||'Готово');
+      })
       .catch(function(){toast('Не вдалося зберегти. Спробуйте ще раз.')});
   }
   function toast(t){var n=$('#toast');n.textContent=t;n.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){n.hidden=true},3500)}
@@ -1334,7 +1337,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     else if(b.dataset.evedit){editForm(b.dataset.evedit);}
     else if(b.dataset.evsave){var pl=$('#f-place');changeEvent({id:b.dataset.evsave,action:'edit',title:$('#f-title').value.trim(),date:$('#f-date').value,time:$('#f-time').value,place:pl?pl.value.trim():undefined});}
     else if(b.dataset.evdel){if(b.dataset.confirm==='1'){changeEvent({id:b.dataset.evdel,action:'cancel'})}else{b.dataset.confirm='1';b.textContent='Точно скасувати? Натисни ще раз';}}
-    else if(b.dataset.rm){remindSet(b.dataset.rid,b.dataset.rdate,b.dataset.rm);}
+    else if(b.dataset.rm){remindSet(b.dataset.rid,b.dataset.rdate,b.dataset.rm,b);}
     else if(b.dataset.sub){if(b.dataset.sub==='cancel')closeSheet();else submit(b.dataset.sub);}
   });
 
