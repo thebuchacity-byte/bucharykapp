@@ -403,12 +403,14 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   var toastT;
   function remindSet(eid,date,mode,btn){
     if(!LIVE){toast('Тестові дані: нічого не надіслано.');return}
+    var grp=btn?btn.parentNode.querySelectorAll('[data-rm]'):[];
+    var prev=[];grp.forEach(function(x){prev.push([x,x.getAttribute('aria-pressed')]);x.setAttribute('aria-pressed',String(x===btn))});
     fetch(API_BASE+'/api/reminder',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify({event_id:eid,date:date,offsets:mode})})
       .then(function(r){return r.json()}).then(function(r){
-        if(r.ok&&btn){btn.parentNode.querySelectorAll('[data-rm]').forEach(function(x){x.setAttribute('aria-pressed',String(x===btn))})}
+        if(!r.ok){prev.forEach(function(p){p[0].setAttribute('aria-pressed',p[1]||'false')})}
         toast(r.note||'Готово');
       })
-      .catch(function(){toast('Не вдалося зберегти. Спробуйте ще раз.')});
+      .catch(function(){prev.forEach(function(p){p[0].setAttribute('aria-pressed',p[1]||'false')});toast('Не вдалося зберегти. Спробуйте ще раз.')});
   }
   function toast(t){var n=$('#toast');n.textContent=t;n.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){n.hidden=true},3500)}
   function setStatus(id,status){
