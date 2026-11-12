@@ -509,6 +509,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         opt('щотижня:пн','Щотижня: понеділок')+opt('щотижня:вт','Щотижня: вівторок')+opt('щотижня:ср','Щотижня: середа')+opt('щотижня:чт','Щотижня: четвер')+
         opt('щотижня:пт','Щотижня: пʼятниця')+opt('щотижня:сб','Щотижня: субота')+opt('щотижня:нд','Щотижня: неділя')+opt('щомісяця','Щомісяця: те саме число')+'</select></div>'+
       '<div class="fld" id="f-untilbox" hidden><label for="f-until">До дати (необовʼязково, без дати — на рік)</label><input id="f-until" type="date" min="'+today()+'"></div>'+
+      '<div class="fld"><label for="f-link">Інше посилання на Meet (необовʼязково, інакше — наше постійне)</label><input id="f-link" type="url" maxlength="300" placeholder="https://meet.google.com/..."></div>'+
       '<div class="fld"><label>З ким (можна кілька або всі)</label><div class="chips" id="f-pp">'+whoChips(FORM.people||[],'pp')+'</div></div>'+
       matBlock()+'<p class="hint">Усі обрані отримають у Telegram посилання на постійний Meet команди, а за 10 хвилин до початку ще й нагадування.</p><p class="err" id="f-err" hidden></p>'+
       '<div class="acts"><button class="btn pri" id="f-ok" data-sub="meeting">Створити зустріч</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
@@ -584,6 +585,9 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       var mr=($('#f-rec')||{}).value||'';
       if(mr==='щомісяця') mr='щомісяця:'+parseInt(body.date.slice(8),10);
       if(mr){var mu=($('#f-until')||{}).value||'';body.recur=mr+(mu?'|до:'+mu:'')}
+      var lk=($('#f-link')||{}).value||'';lk=lk.trim();
+      if(lk&&!/^https?:\/\//i.test(lk)){ferr('Посилання має починатися з https://');return}
+      if(lk) body.link=lk;
       url='/api/meeting';
     }else if(kind==='event'){
       body={project:$('#f-proj').value,title:title,date:$('#f-date').value,time:$('#f-time').value,place:$('#f-place').value.trim(),end_time:($('#f-end')||{}).value||'',end_date:($('#f-edate')||{}).value||''};
