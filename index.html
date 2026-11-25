@@ -771,6 +771,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
       h+='<div class="panel"><div class="lab">Продано всього</div><div class="big">'+money(t.sum)+'</div><p class="hint">'+t.qty+' шт.</p></div>';
       h+='<div class="panel"><h2>За місяцями</h2>'+(S.stats.months.length?S.stats.months.map(function(m){return '<div class="pt"><div><b>'+esc(mLabel(m.month))+'</b><p>'+m.qty+' шт.</p></div><b>'+money(m.sum)+'</b></div>'}).join(''):'<p class="note">Продажів поки немає.</p>')+'</div>';
     }
+    if(CART.length) h+='<div class="panel"><button class="btn pri" data-shcart="1" style="width:100%">🛒 Кошик: '+CART.length+' поз. · '+money(cartSum())+' — оформити</button></div>';
     if(S.archive) h+='<div class="panel"><button class="btn pri" id="arch-open">Архів продажів: виправити або скасувати</button></div>';
     h+='<div class="panel"><h2>Товари</h2>'+((S.quick||S.owner)?'<button class="btn" data-stock="1" style="margin-bottom:10px">Склад</button>':'')+((S.items||[]).length?S.items.map(function(i){return '<div class="pt"><div><b>'+esc(i.name)+'</b><p class="hint">'+stockTxt(i)+'</p></div><div style="text-align:right;white-space:nowrap"><b>'+money(i.price)+'</b><br><button class="btn" style="margin-top:6px;padding:4px 10px;font-size:12px" data-sell="'+esc(i.id)+'">Продаж</button></div></div>'}).join(''):'<p class="note">Каталог порожній.</p>')+'</div>';
     $('#shop').innerHTML=h;
@@ -963,9 +964,67 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
         '<button type="button" class="chip" data-shloc="spekla" aria-pressed="false">Spekla (є '+((it.stock||{}).spekla||0)+')</button></div></div>'+
       '<div class="fld"><label for="f-cmt">Коментар</label><input id="f-cmt" type="text" maxlength="300" placeholder="необов\'язково"></div>'+
       '<p class="hint" id="f-total" data-price="'+it.price+'">Разом: '+money(it.price)+'</p>'+
-      '<div class="acts"><button class="btn pri" id="f-ok" data-shsave="'+esc(id)+'">Все правильно</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
+      '<p class="hint">Купують кілька товарів? Натисніть «В кошик», а «Як продано», доставку й оплату оберете один раз у кошику.</p>'+
+      '<div class="acts"><button class="btn pri" id="f-ok" data-shsave="'+esc(id)+'">Все правильно</button><button class="btn" data-shcartadd="'+esc(id)+'">🛒 В кошик</button><button class="btn" data-sub="cancel">Скасувати</button></div>');
     refreshChips(it);
     document.querySelectorAll('#f-loc [data-shloc]').forEach(function(b){b.addEventListener('click',function(){setTimeout(function(){refreshChips(it)},0)})});
+  }
+  var CART=[];
+  function shopPick(){
+    var sz=document.querySelector('#f-sz [data-shsize][aria-pressed="true"]');
+    var cl=document.querySelector('#f-cl [data-shcolor][aria-pressed="true"]');
+    var lc=document.querySelector('#f-loc [data-shloc][aria-pressed="true"]');
+    var dbox=document.getElementById('f-disc-box');
+    return {qty:($('#f-qty').value||'1').trim(),
+      size:(sz?sz.dataset.shsize:'')||((document.getElementById('f-csz')||{}).value||'').trim(),
+      color:(cl?cl.dataset.shcolor:'')||((document.getElementById('f-ccl')||{}).value||'').trim(),
+      location:lc?lc.dataset.shloc:'',
+      discount:(dbox&&!dbox.hidden)?(document.getElementById('f-disc').value||''):''};
+  }
+  function cartAdd(id){
+    var it=((D.shop||{}).items||[]).filter(function(x){return x.id===id})[0]; if(!it)return;
+    var p=shopPick(), fe=$('#f-err');
+    var q=parseInt(p.qty,10);
+    if(!(q>=1)){fe.textContent='Вкажіть кількість.';fe.hidden=false;return}
+    if((it.sizes||[]).length&&!p.size){fe.textContent='Оберіть розмір.';fe.hidden=false;return}
+    if((it.colors||[]).length&&!p.color){fe.textContent='Оберіть колір.';fe.hidden=false;return}
+    if(!p.location){fe.textContent='Оберіть, звідки товар: Офіс або Spekla.';fe.hidden=false;return}
+    p.product_id=id;p.qty=q;p.name=it.name;p.price=it.price;
+    CART.push(p);closeSheet();shopRender();toast('Додано в кошик: '+CART.length+' поз.');
+  }
+  function cartSum(){return CART.reduce(function(a,c){return a+c.price*c.qty-(parseFloat(String(c.discount||'0').replace(',','.'))||0)},0)}
+  function cartOpen(){
+    if(!CART.length){toast('Кошик порожній.');return}
+    openSheet('<h3>🛒 Кошик</h3>'+CART.map(function(c,i){
+        return '<div class="pt"><div><b>'+esc(c.name)+'</b><p class="hint">'+[c.size,c.color,c.qty+' шт.',c.location==='spekla'?'Spekla':'Офіс',c.discount?'знижка '+c.discount+' грн':''].filter(Boolean).map(esc).join(' · ')+'</p></div>'+
+          '<button class="btn" style="padding:4px 10px" data-shcrm="'+i+'">✕</button></div>'}).join('')+
+      '<div class="fld"><label>Як продано</label><div class="chips" id="f-pl">'+
+        ['Сайт','Спекла','Офіс','Виїзд','З рук'].map(function(p){return '<button type="button" class="chip" data-shpl="'+p+'" aria-pressed="false">'+p+'</button>'}).join('')+'</div></div>'+
+      '<div class="fld"><label>Доставка</label><div class="chips" id="f-dl">'+
+        '<button type="button" class="chip" data-shdl="Доставка НП" aria-pressed="false">Доставка НП</button>'+
+        '<button type="button" class="chip" data-shdl="Самовивіз" aria-pressed="false">Самовивіз</button></div></div>'+
+      '<div class="fld"><label>Оплата (одним платежем)</label><div class="chips" id="f-ch">'+
+        [['cash','Готівка'],['site','Сайт'],['fop','ФОП'],['bank','Банка'],['cod','Післяплата НП']].map(function(c){return '<button type="button" class="chip" data-shch="'+c[0]+'" aria-pressed="false">'+c[1]+'</button>'}).join('')+'</div></div>'+
+      '<div class="fld"><label for="f-cmt">Коментар</label><input id="f-cmt" type="text" maxlength="300" placeholder="необов\'язково"></div>'+
+      '<p class="hint"><b>Разом: '+money(cartSum())+'</b></p><p class="err" id="f-err" hidden></p>'+
+      '<div class="acts"><button class="btn pri" id="f-ok" data-shcartsave="1">Оформити ('+CART.length+')</button><button class="btn" data-shcartclear="1">Очистити</button><button class="btn" data-sub="cancel">Закрити</button></div>');
+  }
+  function cartSave(){
+    var fe=$('#f-err'), btn=$('#f-ok');
+    var plc=document.querySelector('#f-pl [data-shpl][aria-pressed="true"]');
+    var chc=document.querySelector('#f-ch [data-shch][aria-pressed="true"]');
+    var dlc=document.querySelector('#f-dl [data-shdl][aria-pressed="true"]');
+    if(!LIVE){closeSheet();toast('Тестові дані: нічого не збережено.');return}
+    btn.disabled=true;
+    fetch(API_BASE+'/api/shop/sale',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify({
+        items:CART.map(function(c){return {product_id:c.product_id,qty:c.qty,size:c.size,color:c.color,location:c.location,discount:c.discount}}),
+        place:plc?plc.dataset.shpl:'',channel:chc?chc.dataset.shch:'',delivery:dlc?dlc.dataset.shdl:'',
+        comment:((document.getElementById('f-cmt')||{}).value||'').trim()})})
+      .then(function(r){return r.json()}).then(function(r){
+        if(!r.ok){fe.textContent=r.note||'Не вдалося.';fe.hidden=false;btn.disabled=false;return}
+        CART=[];closeSheet();toast(r.note||'Готово');
+        return api('/api/shop').then(function(x){D.shop=x;shopRender()});
+      }).catch(function(){fe.textContent='Не вдалося зберегти. Спробуйте ще раз.';fe.hidden=false;btn.disabled=false});
   }
   function shopSave(id){
     var fe=$('#f-err'), btn=$('#f-ok'), q=($('#f-qty').value||'1').trim();
@@ -1340,6 +1399,11 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     else if(b.dataset.shdisc){var bx=document.getElementById('f-disc-box');var on=bx.hidden;bx.hidden=!on;b.setAttribute('aria-pressed',String(on));if(!on){document.getElementById('f-disc').value='';}shopTotal();}
     else if(b.dataset.shdq){document.getElementById('f-disc').value=b.dataset.shdq;shopTotal();}
     else if(b.dataset.shsave){shopSave(b.dataset.shsave);}
+    else if(b.dataset.shcartadd){cartAdd(b.dataset.shcartadd);}
+    else if(b.dataset.shcart){cartOpen();}
+    else if(b.dataset.shcrm){CART.splice(+b.dataset.shcrm,1);shopRender();if(CART.length)cartOpen();else closeSheet();}
+    else if(b.dataset.shcartclear){CART=[];closeSheet();shopRender();toast('Кошик очищено.');}
+    else if(b.dataset.shcartsave){cartSave();}
     else if(b.dataset.expaid){expPost('/api/expense/act',{id:b.dataset.expaid,action:'paid',paid:b.dataset.v2==='1'});}
     else if(b.dataset.expdel){if(b.dataset.confirm==='1'){expPost('/api/expense/act',{id:b.dataset.expdel,action:'delete'})}else{b.dataset.confirm='1';b.textContent='Точно? Ще раз';}}
     else if(b.dataset.evedit){editForm(b.dataset.evedit);}
