@@ -354,7 +354,7 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   function pad2(n){return ('0'+n).slice(-2)}
   var PCOL={'Подкаст':'#7C4DFF','Дезінфо':'#D32F2F','Стаття':'#1E88E5','Заходи':'#2E9E5B','Реклама':'#F59E0B','Зустрічі':'#00A3A3','Усі':'#8A6F6B'},PPAL=['#E91E8C','#6D4C41','#3949AB','#00897B','#C0CA33','#FB8C00'];
   function pcol(n){if(PCOL[n])return PCOL[n];var h=0;for(var i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))>>>0;return PCOL[n]=PPAL[h%PPAL.length]}
-  function evHtml(e){return '<div class="ev"><time>'+esc(e.time)+'</time><div><b>'+esc(e.title)+'</b><span class="tag" style="background:'+pcol(e.project)+'22;color:'+pcol(e.project)+'">'+esc(e.project)+'</span>'+(e.place?'<p>'+(/^https?:\/\//.test(e.place)?'<a href="'+esc(e.place)+'" target="_blank" rel="noopener">Відкрити Meet</a>':esc(e.place))+'</p>':'')+''+(e.can_edit&&e.id?'<button class="btn" style="margin-top:8px;padding:6px 12px;font-size:13px" data-evedit="'+esc(e.id)+'">Змінити</button>':'')+(e.id&&!e.task?'<div class="remind" style="margin-top:8px"><span class="hint">Нагадати в Telegram:</span> <button class="chip" data-rm="1" data-rid="'+esc(e.id)+'" data-rdate="'+esc(e.date)+'">за добу</button> <button class="chip" data-rm="3,1" data-rid="'+esc(e.id)+'" data-rdate="'+esc(e.date)+'">за 3 дні і за добу</button> <button class="chip" data-rm="3,2,1" data-rid="'+esc(e.id)+'" data-rdate="'+esc(e.date)+'">щодня за 3 дні до</button></div>':'')+'</div></div>'}
+  function evHtml(e){return '<div class="ev"><time>'+esc(e.time)+'</time><div><b>'+esc(e.title)+'</b><span class="tag" style="background:'+pcol(e.project)+'22;color:'+pcol(e.project)+'">'+esc(e.project)+'</span>'+(e.place?'<p>'+(/^https?:\/\//.test(e.place)?'<a href="'+esc(e.place)+'" target="_blank" rel="noopener">Відкрити Meet</a>':esc(e.place))+'</p>':'')+''+(e.can_edit&&e.id?'<button class="btn" style="margin-top:8px;padding:6px 12px;font-size:13px" data-evedit="'+esc(e.id)+'">Змінити</button>':(e.id&&!e.task?'<button class="btn" style="margin-top:8px;padding:6px 12px;font-size:13px" data-evprop="'+esc(e.id)+'">Запропонувати зміну</button>':''))+(e.id&&!e.task?'<div class="remind" style="margin-top:8px"><span class="hint">Нагадати в Telegram:</span> <button class="chip" data-rm="1" data-rid="'+esc(e.id)+'" data-rdate="'+esc(e.date)+'">за добу</button> <button class="chip" data-rm="3,1" data-rid="'+esc(e.id)+'" data-rdate="'+esc(e.date)+'">за 3 дні і за добу</button> <button class="chip" data-rm="3,2,1" data-rid="'+esc(e.id)+'" data-rdate="'+esc(e.date)+'">щодня за 3 дні до</button></div>':'')+'</div></div>'}
   function cal(){
     var now=new Date(); if(!st.cm) st.cm={y:now.getFullYear(),m:now.getMonth()};
     var PR=['Усі'];D.events.forEach(function(e){if(e.project&&PR.indexOf(e.project)<0)PR.push(e.project)});
@@ -444,22 +444,24 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
   }
   function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
   function opt(v,t,sel){return '<option value="'+esc(v)+'"'+(sel?' selected':'')+'>'+esc(t)+'</option>'}
-  function editForm(id){
+  function editForm(id,propose){
     var e=D.events.filter(function(x){return x.id===id})[0];if(!e)return;
     var meet=e.project==='Зустрічі';
-    openSheet('<h3>'+(meet?'Зустріч':'Подія')+': змінити</h3>'+
+    openSheet('<h3>'+(meet?'Зустріч':'Подія')+(propose?': запропонувати зміну':': змінити')+'</h3>'+
       '<div class="fld"><label for="f-title">Назва</label><input id="f-title" type="text" maxlength="200" value="'+esc(e.title)+'"></div>'+
       '<div class="two"><div class="fld"><label for="f-date">Дата</label><input id="f-date" type="date" min="'+today()+'" value="'+esc(e.date)+'"></div>'+
       '<div class="fld"><label for="f-time">Час</label><input id="f-time" type="time" value="'+esc(e.time)+'"></div></div>'+
       (meet?'':'<div class="fld"><label for="f-place">Місце</label><input id="f-place" type="text" maxlength="200" value="'+esc(e.place||'')+'"></div>')+
-      '<p class="hint">Колеги з проєкту отримають повідомлення про зміну.</p><p class="err" id="f-err" hidden></p>'+
-      '<div class="acts"><button class="btn pri" id="f-ok" data-evsave="'+esc(id)+'">Зберегти</button><button class="btn" style="color:#C8323C" data-evdel="'+esc(id)+'">Скасувати подію</button><button class="btn" data-sub="cancel">Закрити</button></div>');
+      (propose?'<p class="hint">Автор(ка) події отримає вашу пропозицію в Telegram і вирішить: підтвердити чи відхилити. Вам прийде відповідь.</p><p class="err" id="f-err" hidden></p>'+
+        '<div class="acts"><button class="btn pri" id="f-ok" data-evpropsave="'+esc(id)+'">Надіслати пропозицію</button><button class="btn" data-sub="cancel">Закрити</button></div>'
+      :'<p class="hint">Повідомлення про зміну отримають учасники події та її автор(ка).</p><p class="err" id="f-err" hidden></p>'+
+        '<div class="acts"><button class="btn pri" id="f-ok" data-evsave="'+esc(id)+'">Зберегти</button><button class="btn" style="color:#C8323C" data-evdel="'+esc(id)+'">Скасувати подію</button><button class="btn" data-sub="cancel">Закрити</button></div>'));
   }
-  function changeEvent(body){
+  function changeEvent(body,path){
     var ferr2=function(t){var el=$('#f-err');el.textContent=t;el.hidden=!t};
     if(!LIVE){closeSheet();toast('Тестові дані: нічого не змінено.');return}
     $('#f-ok').disabled=true;
-    fetch(API_BASE+'/api/event/change',{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify(body)})
+    fetch(API_BASE+(path||'/api/event/change'),{method:'POST',headers:{'X-Init-Data':INIT,'Content-Type':'application/json'},body:JSON.stringify(body)})
       .then(function(r){return r.json()}).then(function(r){
         if(!r.ok){ferr2(r.note||'Не вдалося зберегти.');$('#f-ok').disabled=false;return}
         closeSheet();toast(r.note||'Готово');
@@ -1341,6 +1343,8 @@ h2{font-size:13px;margin:0;color:var(--muted);text-transform:uppercase;letter-sp
     else if(b.dataset.expaid){expPost('/api/expense/act',{id:b.dataset.expaid,action:'paid',paid:b.dataset.v2==='1'});}
     else if(b.dataset.expdel){if(b.dataset.confirm==='1'){expPost('/api/expense/act',{id:b.dataset.expdel,action:'delete'})}else{b.dataset.confirm='1';b.textContent='Точно? Ще раз';}}
     else if(b.dataset.evedit){editForm(b.dataset.evedit);}
+    else if(b.dataset.evprop){editForm(b.dataset.evprop,true);}
+    else if(b.dataset.evpropsave){var pl2=$('#f-place');changeEvent({id:b.dataset.evpropsave,title:$('#f-title').value.trim(),date:$('#f-date').value,time:$('#f-time').value,place:pl2?pl2.value.trim():undefined},'/api/event/propose');}
     else if(b.dataset.evsave){var pl=$('#f-place');changeEvent({id:b.dataset.evsave,action:'edit',title:$('#f-title').value.trim(),date:$('#f-date').value,time:$('#f-time').value,place:pl?pl.value.trim():undefined});}
     else if(b.dataset.evdel){if(b.dataset.confirm==='1'){changeEvent({id:b.dataset.evdel,action:'cancel'})}else{b.dataset.confirm='1';b.textContent='Точно скасувати? Натисни ще раз';}}
     else if(b.dataset.rm){remindSet(b.dataset.rid,b.dataset.rdate,b.dataset.rm,b);}
